@@ -1,6 +1,5 @@
 package com.github.brewin.mvicoroutines.ui.main
 
-
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.SearchView
@@ -11,11 +10,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.view.isVisible
 import androidx.view.iterator
-import com.github.brewin.mvicoroutines.NavigatorAction
+import com.github.brewin.mvicoroutines.NavigatorTarget
 import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.GitHubApi
 import com.github.brewin.mvicoroutines.data.Repository
-import com.github.brewin.mvicoroutines.navigator
+import com.github.brewin.mvicoroutines.navigateTo
 import com.github.brewin.mvicoroutines.ui.base.GenericListAdapter
 import com.github.brewin.mvicoroutines.ui.base.UiRenderer
 import com.github.brewin.mvicoroutines.ui.base.uiProvider
@@ -29,11 +28,9 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
     override val ui by uiProvider { MainUi(Repository(GitHubApi.service)) }
 
     private val listAdapter by lazy {
-        GenericListAdapter<Button, ReposItem>(R.layout.item_repo) { button, item ->
-            val reposItem = ReposItem(item.name, item.url)
-            button.text = item.name
-            //FIXME: Opening item doesn't really change state. Just open here?
-            button.onClick { ui.offerAction(MainUiAction.ItemClick(reposItem)) }
+        GenericListAdapter<Button, ReposItem>(R.layout.item_repo) { button, (name, url) ->
+            button.text = name
+            button.onClick { navigateTo(NavigatorTarget.OpenUri(requireContext(), url)) }
         }
     }
 
@@ -97,9 +94,6 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
                 emptyView.isVisible = true
                 listAdapter.items = emptyList()
                 swipeRefreshLayout.isRefreshing = false
-            }
-            is MainUiState.OpenUrl -> {
-                navigator.offer(NavigatorAction.OpenUri(requireContext(), state.itemUrlToOpen))
             }
         }
     }

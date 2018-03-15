@@ -19,14 +19,12 @@ sealed class MainUiAction : UiAction {
     object InProgress : MainUiAction()
     data class Search(val query: String) : MainUiAction()
     object Refresh : MainUiAction()
-    data class ItemClick(val item: ReposItem) : MainUiAction()
 }
 
 sealed class MainUiResult : UiResult {
     object InProgress : MainUiResult()
     data class GotRepos(val query: String, val repos: GitHubRepos) : MainUiResult()
     data class GotError(val query: String, val error: Throwable) : MainUiResult()
-    data class GotItemUrl(val url: Uri) : MainUiResult()
 }
 
 sealed class MainUiState : UiState {
@@ -42,10 +40,6 @@ sealed class MainUiState : UiState {
     data class Failure(
         val query: String,
         val error: Throwable
-    ) : MainUiState()
-
-    data class OpenUrl(
-        val itemUrlToOpen: Uri
     ) : MainUiState()
 }
 
@@ -65,14 +59,12 @@ class MainUi(
         is MainUiAction.InProgress -> MainUiResult.InProgress
         is MainUiAction.Search -> search(action.query)
         is MainUiAction.Refresh -> refresh()
-        is MainUiAction.ItemClick -> MainUiResult.GotItemUrl(action.item.url)
     }.also { Timber.d("Action:\n$action") }
 
     override suspend fun stateFromResult(result: MainUiResult): MainUiState = when (result) {
         is MainUiResult.InProgress -> MainUiState.InProgress
         is MainUiResult.GotRepos -> MainUiState.Success(result.query, mapToUi(result.repos))
         is MainUiResult.GotError -> MainUiState.Failure(result.query, result.error)
-        is MainUiResult.GotItemUrl -> MainUiState.OpenUrl(result.url)
     }.also { Timber.d("Result:\n$result") }
 
     fun offerActionWithProgress(action: MainUiAction) {
