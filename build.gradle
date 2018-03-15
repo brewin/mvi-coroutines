@@ -1,0 +1,40 @@
+buildscript {
+    ext {
+        kotlinVersion = '1.2.30'
+        supportVersion = '27.1.0'
+        constraintLayoutVersion = '1.0.2'
+        buildToolsVersion = '3.0.1'
+        ankoVersion = '0.10.4'
+        kotlinxCoroutinesVersion = '0.22.5'
+        androidKtxVersion = '0.2'
+        archRuntimeVersion = '1.1.0'
+        archVersion = '1.1.0'
+        okHttpVersion = '3.10.0'
+        retrofitVersion = '2.3.0' // Breaks with 2.4.0
+        retrofitCoroutinesVersion = '1.0.0'
+        moshiVersion = '1.5.0'
+        timberVersion = '4.6.1'
+        androidTestRunnerVersion = '1.0.1'
+        espressoVersion = '3.0.1'
+        junitVersion = '4.12'
+    }
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$buildToolsVersion"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

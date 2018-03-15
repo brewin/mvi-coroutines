@@ -1,0 +1,76 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
+
+androidExtensions {
+    experimental = true
+}
+
+android {
+    compileSdkVersion 27
+    defaultConfig {
+        buildToolsVersion '27.0.3'
+        applicationId "com.github.brewin.coroutinesapp"
+        minSdkVersion 19
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
+        debug.java.srcDirs += 'src/debug/kotlin'
+        main.java.srcDirs += 'src/main/kotlin'
+        release.java.srcDirs += 'src/release/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+}
+
+dependencies {
+    //implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
+
+    implementation "com.android.support:appcompat-v7:$supportVersion"
+    implementation "com.android.support.constraint:constraint-layout:$constraintLayoutVersion"
+    implementation "com.android.support:design:$supportVersion"
+
+    implementation "android.arch.lifecycle:runtime:$archRuntimeVersion"
+    implementation "android.arch.lifecycle:extensions:$archVersion"
+    kapt "android.arch.lifecycle:compiler:$archVersion"
+
+    implementation "org.jetbrains.anko:anko-sdk23-coroutines:$ankoVersion"
+    implementation "org.jetbrains.anko:anko-appcompat-v7-coroutines:$ankoVersion"
+    implementation "org.jetbrains.anko:anko-coroutines:$ankoVersion"
+    //implementation "org.jetbrains.anko:anko-appcompat-v7-commons:$ankoVersion"
+    //implementation "org.jetbrains.anko:anko-commons:$ankoVersion"
+    //implementation "org.jetbrains.anko:anko-sdk23-listeners:$ankoVersion"
+
+    implementation "androidx.core:core-ktx:$androidKtxVersion"
+
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-moshi:$retrofitVersion"
+    //implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
+    //implementation "com.squareup.okhttp3:logging-interceptor:$okHttpVersion"
+    implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-experimental-adapter:$retrofitCoroutinesVersion"
+
+    implementation "com.jakewharton.timber:timber:$timberVersion"
+
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "com.android.support.test:runner:$androidTestRunnerVersion"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espressoVersion"
+}
