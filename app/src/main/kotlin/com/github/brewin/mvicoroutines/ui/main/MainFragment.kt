@@ -86,6 +86,7 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
                 swipeRefreshLayout.isRefreshing = true
             }
             is MainUiState.Success -> {
+                emptyView.isVisible = false
                 listAdapter.items = state.content
                 swipeRefreshLayout.isRefreshing = false
             }
