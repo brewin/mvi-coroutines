@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.support.annotation.MainThread
 import android.support.v4.app.Fragment
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.channels.*
@@ -23,16 +24,13 @@ interface UiState
 
 abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : ViewModel() {
 
-    private val parentJob = Job() //TODO: Needed or is ::close enough?
-    private var renderJob = Job()
-
     // Handles actions (aka intents/events) (eg. button clicks)
-    private val actions = actor<A>(parentJob, Channel.CONFLATED) {
+    private val actions = actor<A>(CommonPool, Channel.CONFLATED) {
         consumeEach { results.send(resultFromAction(it)) }
     }
 
     // Handles results of actions
-    private val results = actor<R>(parentJob, Channel.CONFLATED) {
+    private val results = actor<R>(CommonPool, Channel.CONFLATED) {
         consumeEach { state.send(stateFromResult(it)) }
     }
 
@@ -40,20 +38,23 @@ abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : Vi
     private val state = ConflatedBroadcastChannel(initialState)
     private var stateSub: ReceiveChannel<S>? = null
 
+    private var renderJob: Job? = null
+
     // Reduce a UiAction to a UiResult
     protected abstract suspend fun resultFromAction(action: A): R
 
     // Reduce a UiResult to a UiState
     protected abstract suspend fun stateFromResult(result: R): S
 
-    fun startRendering(renderer: UiRenderer<A, R, S>) = state.openSubscription().run {
+    fun startRendering(renderer: UiRenderer<A, R, S>) {
         stopRendering()
-        renderJob = launch(UI + parentJob) { consumeEach(renderer::render) }
-        stateSub = this
+        stateSub = state.openSubscription().also {
+            renderJob = launch(UI) { it.consumeEach(renderer::render) }
+        }
     }
 
     fun stopRendering() {
-        renderJob.cancel()
+        renderJob?.cancel()
         stateSub?.cancel()
     }
 
@@ -64,7 +65,6 @@ abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : Vi
     override fun onCleared() {
         super.onCleared()
         stopRendering()
-        parentJob.cancel()
         Timber.d("ViewModel::onCleared")
     }
 }

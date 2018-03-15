@@ -8,8 +8,8 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.view.forEach
 import androidx.view.isVisible
-import androidx.view.iterator
 import com.github.brewin.mvicoroutines.NavigatorTarget
 import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.GitHubApi
@@ -40,19 +40,21 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-        for (item in menu.iterator()) when (item.itemId) {
-            R.id.action_search -> {
-                (item.actionView as SearchView).onQueryTextListener {
-                    onQueryTextSubmit { query ->
-                        query?.let { ui.offerActionWithProgress(MainUiAction.Search(it)) }
-                        true
+        menu.forEach {
+            when (it.itemId) {
+                R.id.action_search -> {
+                    (it.actionView as SearchView).onQueryTextListener {
+                        onQueryTextSubmit { query ->
+                            query?.let { ui.offerActionWithProgress(MainUiAction.Search(it)) }
+                            true
+                        }
                     }
                 }
-            }
-            R.id.action_refresh -> {
-                item.setOnMenuItemClickListener {
-                    ui.offerActionWithProgress(MainUiAction.Refresh)
-                    true
+                R.id.action_refresh -> {
+                    it.setOnMenuItemClickListener {
+                        ui.offerActionWithProgress(MainUiAction.Refresh)
+                        true
+                    }
                 }
             }
         }

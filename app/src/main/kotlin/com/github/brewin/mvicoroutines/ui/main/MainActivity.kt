@@ -24,8 +24,4 @@ class MainActivity : AppCompatActivity() {
         R.id.action_settings -> true
         else -> super.onOptionsItemSelected(item)
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-    }
 }
