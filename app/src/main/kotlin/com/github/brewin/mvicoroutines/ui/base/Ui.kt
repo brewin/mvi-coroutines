@@ -30,6 +30,7 @@ abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : Vi
     }
 
     // Handles results of actions
+
     private val results = actor<R>(CommonPool, Channel.CONFLATED) {
         consumeEach { state.send(stateFromResult(it)) }
     }

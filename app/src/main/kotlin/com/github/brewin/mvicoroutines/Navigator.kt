@@ -11,21 +11,21 @@ import java.lang.ref.WeakReference
 sealed class NavigatorTarget {
     data class OpenUri(
         val context: Context,
-        val uri: android.net.Uri
+        val url: Uri
     ) : NavigatorTarget()
 }
 
 private val navigator = actor<NavigatorTarget>(CommonPool, Channel.CONFLATED) {
     for (target in this) when (target) {
-        is NavigatorTarget.OpenUri -> navigateToUri(
+        is NavigatorTarget.OpenUri -> navigateToUrl(
             WeakReference<Context>(target.context).get(),
-            target.uri
+            target.url
         )
     }
 }
 
 fun navigateTo(target: NavigatorTarget) = navigator.offer(target)
 
-private fun navigateToUri(context: Context?, uri: Uri) {
-    context?.startActivity(Intent(Intent.ACTION_VIEW, uri))
+private fun navigateToUrl(context: Context?, url: Uri) {
+    context?.startActivity(Intent(Intent.ACTION_VIEW, url))
 }
