@@ -6,10 +6,8 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.github.brewin.mvicoroutines.ui.main.MainUiResult
-import com.github.brewin.mvicoroutines.ui.main.MainUiState
 
-abstract class UiFragment<A : UiAction, R : MainUiResult, S : MainUiState> : Fragment(),
+abstract class UiFragment<A : UiAction, R : UiResult, S : UiState> : Fragment(),
     UiRenderer<A, R, S> {
 
     @LayoutRes
