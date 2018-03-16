@@ -1,12 +1,8 @@
 package com.github.brewin.mvicoroutines.ui.main
 
-import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.widget.SearchView
-import android.view.LayoutInflater
 import android.view.Menu
-import android.view.View
-import android.view.ViewGroup
+import android.view.MenuInflater
 import android.widget.Button
 import androidx.view.forEach
 import androidx.view.isVisible
@@ -16,14 +12,14 @@ import com.github.brewin.mvicoroutines.data.GitHubApi
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.navigateTo
 import com.github.brewin.mvicoroutines.ui.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.ui.base.UiRenderer
+import com.github.brewin.mvicoroutines.ui.base.UiFragment
 import com.github.brewin.mvicoroutines.ui.base.uiProvider
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.jetbrains.anko.appcompat.v7.coroutines.onQueryTextListener
 import org.jetbrains.anko.sdk23.coroutines.onClick
 import timber.log.Timber
 
-class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiState> {
+class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
 
     override val ui by uiProvider { MainUi(Repository(GitHubApi.service)) }
 
@@ -34,12 +30,16 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun getLayoutId() = R.layout.fragment_main
+
+    override fun setupUi() {
         setHasOptionsMenu(true)
+        swipeRefreshLayout.setOnRefreshListener { ui.offerActionWithProgress(MainUiAction.Refresh) }
+        reposRecyclerView.adapter = listAdapter
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_main, menu)
         menu.forEach {
             when (it.itemId) {
                 R.id.action_search -> {
@@ -58,26 +58,7 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
                 }
             }
         }
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_main, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupUi()
-    }
-
-    private fun setupUi() {
-        swipeRefreshLayout.setOnRefreshListener { ui.offerActionWithProgress(MainUiAction.Refresh) }
-        reposRecyclerView.adapter = listAdapter
-        ui.startRendering(this)
+        super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun render(state: MainUiState) {
@@ -99,10 +80,5 @@ class MainFragment : Fragment(), UiRenderer<MainUiAction, MainUiResult, MainUiSt
                 swipeRefreshLayout.isRefreshing = false
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        ui.stopRendering()
     }
 }
