@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MVI Coroutines</string>
+    <string name="action_search">Search</string>
+    <string name="action_refresh">Refresh</string>
 </resources>
