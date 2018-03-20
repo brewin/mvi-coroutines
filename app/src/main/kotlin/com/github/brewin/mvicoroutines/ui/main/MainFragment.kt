@@ -26,7 +26,7 @@ class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
     private val listAdapter by lazy {
         GenericListAdapter<Button, ReposItem>(R.layout.item_repo) { button, (name, url) ->
             button.text = name
-            button.onClick { navigateTo(NavigatorTarget.OpenUri(requireContext(), url)) }
+            button.onClick { navigateTo(NavigatorTarget.OpenUrl(requireContext(), url)) }
         }
     }
 
@@ -63,22 +63,9 @@ class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
 
     override fun render(state: MainUiState) {
         Timber.d("State:\n$state")
-        when (state) {
-            is MainUiState.InProgress -> {
-                emptyView.isVisible = false
-                swipeRefreshLayout.isRefreshing = true
-            }
-            is MainUiState.Success -> {
-                emptyView.isVisible = false
-                listAdapter.items = state.content
-                swipeRefreshLayout.isRefreshing = false
-            }
-            is MainUiState.Failure -> {
-                emptyView.text = state.error.message ?: "Unknown Error"
-                emptyView.isVisible = true
-                listAdapter.items = emptyList()
-                swipeRefreshLayout.isRefreshing = false
-            }
-        }
+        emptyView.text = state.error?.message ?: "Search for GitHub repos"
+        emptyView.isVisible = state.repoList.isEmpty()
+        listAdapter.items = state.repoList
+        swipeRefreshLayout.isRefreshing = state.isLoading
     }
 }

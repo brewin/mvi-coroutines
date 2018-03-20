@@ -27,31 +27,21 @@ sealed class MainUiResult : UiResult {
     data class GotError(val query: String, val error: Throwable) : MainUiResult()
 }
 
-sealed class MainUiState : UiState {
-    object Initial : MainUiState()
-    object InProgress : MainUiState()
-
-    @Parcelize
-    data class Success(
-        val query: String,
-        val content: List<ReposItem>
-    ) : MainUiState(), Parcelable
-
-    data class Failure(
-        val query: String,
-        val error: Throwable
-    ) : MainUiState()
-}
+@Parcelize
+data class MainUiState(
+    val query: String = "",
+    val isLoading: Boolean = false,
+    val repoList: List<ReposItem> = emptyList(),
+    val error: Throwable? = null
+) : UiState, Parcelable
 
 @Parcelize
 data class ReposItem(val name: String, val url: Uri) : Parcelable
 
 class MainUi(
     private val repository: Repository,
-    initialState: MainUiState = MainUiState.Initial
+    initialState: MainUiState = MainUiState()
 ) : Ui<MainUiAction, MainUiResult, MainUiState>(initialState) {
-
-    private var lastQuery = "" // FIXME: Better to propagate query through all Actions?
 
     override suspend fun resultFromAction(action: MainUiAction): MainUiResult = when (action) {
         is MainUiAction.UiEnter -> TODO()
@@ -61,11 +51,24 @@ class MainUi(
         is MainUiAction.Refresh -> refresh()
     }.also { Timber.d("Action:\n$action") }
 
-    override suspend fun stateFromResult(result: MainUiResult): MainUiState = when (result) {
-        is MainUiResult.InProgress -> MainUiState.InProgress
-        is MainUiResult.GotRepos -> MainUiState.Success(result.query, mapToUi(result.repos))
-        is MainUiResult.GotError -> MainUiState.Failure(result.query, result.error)
-    }.also { Timber.d("Result:\n$result") }
+    override suspend fun stateFromResult(result: MainUiResult): MainUiState = lastState().run {
+        when (result) {
+            is MainUiResult.InProgress -> copy(
+                isLoading = true
+            )
+            is MainUiResult.GotRepos -> copy(
+                query = result.query,
+                isLoading = false,
+                repoList = mapToUi(result.repos)
+            )
+            is MainUiResult.GotError -> copy(
+                query = result.query,
+                isLoading = false,
+                repoList = emptyList(),
+                error = result.error
+            )
+        }.also { Timber.d("Result:\n$result") }
+    }
 
     fun offerActionWithProgress(action: MainUiAction) {
         offerAction(MainUiAction.InProgress)
@@ -73,7 +76,6 @@ class MainUi(
     }
 
     private suspend fun search(query: String): MainUiResult = if (query.isNotBlank()) {
-        lastQuery = query
         repository.searchRepos(query).run {
             val body = body()
             if (isSuccessful && body != null) {
@@ -90,7 +92,7 @@ class MainUi(
         MainUiResult.GotError(query, IllegalArgumentException("Enter a search term"))
     }
 
-    private suspend fun refresh(): MainUiResult = search(lastQuery)
+    private suspend fun refresh(): MainUiResult = search(lastState().query)
 
     private fun mapToUi(result: GitHubRepos): List<ReposItem> = result.items.orEmpty()
         .filterNot { it.name.isNullOrBlank() || it.htmlUrl.isNullOrBlank() }
