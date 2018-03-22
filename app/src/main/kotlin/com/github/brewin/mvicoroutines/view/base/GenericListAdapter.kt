@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.ui.base
+package com.github.brewin.mvicoroutines.view.base
 
 import android.support.annotation.LayoutRes
 import android.support.v7.widget.RecyclerView

@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.ui.base
+package com.github.brewin.mvicoroutines.view.base
 
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
@@ -12,26 +12,26 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.launch
 import timber.log.Timber
 
-interface UiRenderer<A : UiAction, R : UiResult, S : UiState> {
-    val ui: Ui<A, R, S>
+interface Renderer<I : Intent, T : Task, S : State> {
+    val machine: Machine<I, T, S>
     @MainThread
     fun render(state: S)
 }
 
-interface UiAction
-interface UiResult
-interface UiState
+interface Intent
+interface Task
+interface State
 
-abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : ViewModel() {
+abstract class Machine<I : Intent, T : Task, S : State>(initialState: S) : ViewModel() {
 
-    // Handles actions (aka intents/events) (eg. button clicks)
-    private val actions = actor<A>(CommonPool, Channel.CONFLATED) {
-        consumeEach { results.send(resultFromAction(it)) }
+    // Handles intents (eg. button clicks)
+    private val intents = actor<I>(CommonPool, Channel.CONFLATED) {
+        consumeEach { tasks.send(taskFromIntent(it)) }
     }
 
-    // Handles results of actions
-    private val results = actor<R>(CommonPool, Channel.CONFLATED) {
-        consumeEach { state.send(stateFromResult(it)) }
+    // Handles tasks of intents
+    private val tasks = actor<T>(CommonPool, Channel.CONFLATED) {
+        consumeEach { state.send(stateFromTask(it)) }
     }
 
     // Broadcasts state changes to subscribers
@@ -40,13 +40,11 @@ abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : Vi
 
     private var renderJob: Job? = null
 
-    // Reduce a UiAction to a UiResult
-    protected abstract suspend fun resultFromAction(action: A): R
+    protected abstract suspend fun taskFromIntent(action: I): T
 
-    // Reduce a UiResult to a UiState
-    protected abstract suspend fun stateFromResult(result: R): S
+    protected abstract suspend fun stateFromTask(result: T): S
 
-    fun startRendering(renderer: UiRenderer<A, R, S>) {
+    fun startRendering(renderer: Renderer<I, T, S>) {
         stopRendering()
         stateSub = state.openSubscription().also {
             renderJob = launch(UI) { it.consumeEach(renderer::render) }
@@ -60,17 +58,17 @@ abstract class Ui<A : UiAction, R : UiResult, S : UiState>(initialState: S) : Vi
 
     fun lastState() = state.value
 
-    fun offerAction(action: A) = actions.offer(action)
+    fun offerIntent(intent: I) = intents.offer(intent)
 
     override fun onCleared() {
         super.onCleared()
         stopRendering()
-        Timber.d("ViewModel::onCleared")
+        Timber.d("onCleared() called")
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <reified VM : ViewModel> Fragment.uiProvider(
+inline fun <reified VM : ViewModel> Fragment.machineProvider(
     mode: LazyThreadSafetyMode = LazyThreadSafetyMode.NONE,
     crossinline provider: () -> VM
 ) = lazy(mode) {

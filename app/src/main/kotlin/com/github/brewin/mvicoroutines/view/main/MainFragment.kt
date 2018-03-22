@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.ui.main
+package com.github.brewin.mvicoroutines.view.main
 
 import android.support.v7.widget.SearchView
 import android.view.Menu
@@ -11,17 +11,17 @@ import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.GitHubApi
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.navigateTo
-import com.github.brewin.mvicoroutines.ui.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.ui.base.UiFragment
-import com.github.brewin.mvicoroutines.ui.base.uiProvider
+import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
+import com.github.brewin.mvicoroutines.view.base.Fragment
+import com.github.brewin.mvicoroutines.view.base.machineProvider
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.jetbrains.anko.appcompat.v7.coroutines.onQueryTextListener
 import org.jetbrains.anko.sdk23.coroutines.onClick
 import timber.log.Timber
 
-class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
+class MainFragment : Fragment<MainIntent, MainTask, MainState>() {
 
-    override val ui by uiProvider { MainUi(Repository(GitHubApi.service)) }
+    override val machine by machineProvider { MainMachine(Repository(GitHubApi.service)) }
 
     private val listAdapter by lazy {
         GenericListAdapter<Button, ReposItem>(R.layout.item_repo) { button, (name, url) ->
@@ -34,7 +34,7 @@ class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
 
     override fun setupUi() {
         setHasOptionsMenu(true)
-        swipeRefreshLayout.setOnRefreshListener { ui.offerActionWithProgress(MainUiAction.Refresh) }
+        swipeRefreshLayout.setOnRefreshListener { machine.offerActionWithProgress(MainIntent.Refresh) }
         reposRecyclerView.adapter = listAdapter
     }
 
@@ -45,14 +45,14 @@ class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
                 R.id.action_search -> {
                     (it.actionView as SearchView).onQueryTextListener {
                         onQueryTextSubmit { query ->
-                            query?.let { ui.offerActionWithProgress(MainUiAction.Search(it)) }
+                            query?.let { machine.offerActionWithProgress(MainIntent.Search(it)) }
                             true
                         }
                     }
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        ui.offerActionWithProgress(MainUiAction.Refresh)
+                        machine.offerActionWithProgress(MainIntent.Refresh)
                         true
                     }
                 }
@@ -61,7 +61,7 @@ class MainFragment : UiFragment<MainUiAction, MainUiResult, MainUiState>() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun render(state: MainUiState) {
+    override fun render(state: MainState) {
         Timber.d("State:\n$state")
         emptyView.text = state.error?.message ?: "Search for GitHub repos"
         emptyView.isVisible = state.repoList.isEmpty()

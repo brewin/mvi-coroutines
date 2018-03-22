@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.ui.main
+package com.github.brewin.mvicoroutines.view.main
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity

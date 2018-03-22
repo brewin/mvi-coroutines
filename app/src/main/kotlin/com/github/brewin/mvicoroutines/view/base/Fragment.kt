@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.ui.base
+package com.github.brewin.mvicoroutines.view.base
 
 import android.os.Bundle
 import android.support.annotation.LayoutRes
@@ -7,8 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 
-abstract class UiFragment<A : UiAction, R : UiResult, S : UiState> : Fragment(),
-    UiRenderer<A, R, S> {
+abstract class Fragment<A : Intent, R : Task, S : State> : Fragment(),
+    Renderer<A, R, S> {
 
     @LayoutRes
     protected abstract fun getLayoutId(): Int
@@ -24,11 +24,11 @@ abstract class UiFragment<A : UiAction, R : UiResult, S : UiState> : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupUi()
-        ui.startRendering(this)
+        machine.startRendering(this)
     }
 
     override fun onDestroy() {
-        ui.stopRendering()
+        machine.stopRendering()
         super.onDestroy()
     }
 }
