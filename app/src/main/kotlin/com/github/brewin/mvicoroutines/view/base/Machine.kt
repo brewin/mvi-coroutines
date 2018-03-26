@@ -26,12 +26,12 @@ abstract class Machine<I : Intent, T : Task, S : State>(initialState: S) : ViewM
 
     // Handles intents (eg. button clicks)
     private val intents = actor<I>(CommonPool, Channel.CONFLATED) {
-        consumeEach { tasks.send(taskFromIntent(it)) }
+        consumeEach { tasks.send(taskFromIntent(lastState(), it)) }
     }
 
     // Handles tasks of intents
     private val tasks = actor<T>(CommonPool, Channel.CONFLATED) {
-        consumeEach { state.send(stateFromTask(it)) }
+        consumeEach { state.send(stateFromTask(lastState(), it)) }
     }
 
     // Broadcasts state changes to subscribers
@@ -40,9 +40,9 @@ abstract class Machine<I : Intent, T : Task, S : State>(initialState: S) : ViewM
 
     private var renderJob: Job? = null
 
-    protected abstract suspend fun taskFromIntent(action: I): T
+    protected abstract suspend fun taskFromIntent(lastState: S, intent: I): T
 
-    protected abstract suspend fun stateFromTask(result: T): S
+    protected abstract suspend fun stateFromTask(lastState: S, task: T): S
 
     fun startRendering(renderer: Renderer<I, T, S>) {
         stopRendering()

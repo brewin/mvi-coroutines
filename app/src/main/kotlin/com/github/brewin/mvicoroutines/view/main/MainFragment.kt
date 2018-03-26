@@ -12,14 +12,14 @@ import com.github.brewin.mvicoroutines.data.GitHubApi
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.navigateTo
 import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.view.base.Fragment
+import com.github.brewin.mvicoroutines.view.base.RendererFragment
 import com.github.brewin.mvicoroutines.view.base.machineProvider
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.jetbrains.anko.appcompat.v7.coroutines.onQueryTextListener
 import org.jetbrains.anko.sdk23.coroutines.onClick
 import timber.log.Timber
 
-class MainFragment : Fragment<MainIntent, MainTask, MainState>() {
+class MainFragment : RendererFragment<MainIntent, MainTask, MainState>() {
 
     override val machine by machineProvider { MainMachine(Repository(GitHubApi.service)) }
 
@@ -34,7 +34,7 @@ class MainFragment : Fragment<MainIntent, MainTask, MainState>() {
 
     override fun setupUi() {
         setHasOptionsMenu(true)
-        swipeRefreshLayout.setOnRefreshListener { machine.offerActionWithProgress(MainIntent.Refresh) }
+        swipeRefreshLayout.setOnRefreshListener { machine.offerIntentWithProgress(MainIntent.Refresh) }
         reposRecyclerView.adapter = listAdapter
     }
 
@@ -45,14 +45,14 @@ class MainFragment : Fragment<MainIntent, MainTask, MainState>() {
                 R.id.action_search -> {
                     (it.actionView as SearchView).onQueryTextListener {
                         onQueryTextSubmit { query ->
-                            query?.let { machine.offerActionWithProgress(MainIntent.Search(it)) }
+                            query?.let { machine.offerIntentWithProgress(MainIntent.Search(it)) }
                             true
                         }
                     }
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        machine.offerActionWithProgress(MainIntent.Refresh)
+                        machine.offerIntentWithProgress(MainIntent.Refresh)
                         true
                     }
                 }

@@ -7,8 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 
-abstract class Fragment<A : Intent, R : Task, S : State> : Fragment(),
-    Renderer<A, R, S> {
+abstract class RendererFragment<I : Intent, T : Task, S : State> : Fragment(), Renderer<I, T, S> {
 
     @LayoutRes
     protected abstract fun getLayoutId(): Int

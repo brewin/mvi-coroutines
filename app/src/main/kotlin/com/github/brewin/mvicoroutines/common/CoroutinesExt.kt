@@ -1,4 +1,4 @@
-package com.github.brewin.mvicoroutines.util
+package com.github.brewin.mvicoroutines.common
 
 import kotlinx.coroutines.experimental.delay
 import java.io.IOException
