@@ -23,11 +23,11 @@ sealed class MainTask : Task {
     object InProgress : MainTask()
     class Search(
         val query: String,
-        val result: Result<Throwable, GitHubRepos>
+        val result: Result<MainError.Search, GitHubRepos>
     ) : MainTask()
 
     class Refresh(
-        val result: Result<Throwable, GitHubRepos>
+        val result: Result<MainError.Search, GitHubRepos>
     ) : MainTask()
 }
 
@@ -117,7 +117,7 @@ class MainMachine(
         }
         retry(3) { repository.searchRepos(query) }.run {
             if (items == null || items.isEmpty()) {
-                throw MainError.Search.NoResults("No results found for: $query")
+                throw MainError.Search.NoResults()
             }
             this
         }
