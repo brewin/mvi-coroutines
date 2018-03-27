@@ -70,7 +70,8 @@ class MainMachine(
                 is Success -> lastState.copy(
                     query = task.query,
                     isLoading = false,
-                    repoList = task.result.value.toReposItemList()
+                    repoList = task.result.value.toReposItemList(),
+                    error = null
                 )
                 is Failure.Known -> lastState.copy(
                     query = task.query,
@@ -89,7 +90,8 @@ class MainMachine(
                 is Success -> lastState.copy(
                     query = lastState.query,
                     isLoading = false,
-                    repoList = task.result.value.toReposItemList()
+                    repoList = task.result.value.toReposItemList(),
+                    error = null
                 )
                 is Failure.Known -> lastState.copy(
                     query = lastState.query,
@@ -111,7 +113,7 @@ class MainMachine(
         offerIntent(intent)
     }
 
-    private suspend fun search(query: String) = resultOf<MainError.Search, GitHubRepos> {
+    private suspend fun search(query: String): Result<MainError.Search, GitHubRepos> = resultOf {
         if (query.isBlank()) {
             throw MainError.Search.NoQuery()
         }
