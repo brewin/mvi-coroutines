@@ -1,11 +1,11 @@
 package com.github.brewin.mvicoroutines.view.main
 
-import android.support.v7.widget.SearchView
 import android.view.Menu
 import android.view.MenuInflater
 import android.widget.Button
-import androidx.view.forEach
-import androidx.view.isVisible
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.forEach
+import androidx.core.view.isVisible
 import com.github.brewin.mvicoroutines.NavigatorTarget
 import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.GitHubApi
@@ -14,9 +14,8 @@ import com.github.brewin.mvicoroutines.navigateTo
 import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
 import com.github.brewin.mvicoroutines.view.base.RendererFragment
 import com.github.brewin.mvicoroutines.view.base.machineProvider
+import hideKeyboard
 import kotlinx.android.synthetic.main.fragment_main.*
-import org.jetbrains.anko.appcompat.v7.coroutines.onQueryTextListener
-import org.jetbrains.anko.sdk23.coroutines.onClick
 import timber.log.Timber
 
 class MainFragment : RendererFragment<MainIntent, MainTask, MainState>() {
@@ -26,7 +25,7 @@ class MainFragment : RendererFragment<MainIntent, MainTask, MainState>() {
     private val listAdapter by lazy {
         GenericListAdapter<Button, ReposItem>(R.layout.item_repo) { button, (name, url) ->
             button.text = name
-            button.onClick { navigateTo(NavigatorTarget.OpenUrl(requireContext(), url)) }
+            button.setOnClickListener { navigateTo(NavigatorTarget.OpenUrl(requireContext(), url)) }
         }
     }
 
@@ -43,15 +42,23 @@ class MainFragment : RendererFragment<MainIntent, MainTask, MainState>() {
         menu.forEach {
             when (it.itemId) {
                 R.id.action_search -> {
-                    (it.actionView as SearchView).onQueryTextListener {
-                        onQueryTextSubmit { query ->
-                            query?.let { machine.offerIntentWithProgress(MainIntent.Search(it)) }
-                            true
+                    (it.actionView as SearchView).setOnQueryTextListener(object :
+                        SearchView.OnQueryTextListener {
+                        override fun onQueryTextSubmit(query: String?): Boolean {
+                            hideKeyboard()
+                            if (query != null) {
+                                machine.offerIntentWithProgress(MainIntent.Search(query))
+                            }
+                            return true
                         }
-                    }
+
+                        override fun onQueryTextChange(newText: String?): Boolean {
+                            return false
+                        }
+                    })
                 }
                 R.id.action_refresh -> {
-                    it.setOnMenuItemClickListener {
+                    it.setOnMenuItemClickListener { _ ->
                         machine.offerIntentWithProgress(MainIntent.Refresh)
                         true
                     }

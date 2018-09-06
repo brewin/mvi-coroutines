@@ -1,20 +1,24 @@
+apply plugin: "com.github.ben-manes.versions"
+
 buildscript {
     ext {
-        kotlinVersion = '1.2.31'
-        supportVersion = '27.1.0'
-        constraintLayoutVersion = '1.0.2'
-        buildToolsVersion = '3.0.1'
-        ankoVersion = '0.10.4'
-        kotlinxCoroutinesVersion = '0.22.5'
-        androidKtxVersion = '0.2'
+        kotlinVersion = '1.2.61'
+        versionsPluginVersion = '0.20.0'
+        androidxVersion = '1.0.0-rc02'
+        materialVersion = '1.0.0-rc01'
+        constraintLayoutVersion = '2.0.0-alpha2'
+        androidxArchVersion = '2.0.0-rc01'
+        ankoVersion = '0.10.5'
+        androidKtxVersion = '1.0.0-rc02'
         archVersion = '1.1.1'
-        okHttpVersion = '3.10.0'
+        okHttpVersion = '3.11.0'
         retrofitVersion = '2.3.0' // Breaks with 2.4.0
         retrofitCoroutinesVersion = '1.0.0'
-        moshiVersion = '1.5.0'
-        timberVersion = '4.6.1'
-        androidTestRunnerVersion = '1.0.1'
-        espressoVersion = '3.0.1'
+        kotlinxCoroutinesVersion = '0.25.3'
+        moshiVersion = '1.6.0'
+        timberVersion = '4.7.1'
+        androidTestRunnerVersion = '1.0.2'
+        espressoVersion = '3.0.2'
         junitVersion = '4.12'
     }
     repositories {
@@ -22,8 +26,9 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.0'
+        classpath 'com.android.tools.build:gradle:3.2.0-rc02'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "com.github.ben-manes:gradle-versions-plugin:$versionsPluginVersion"
     }
 }
 

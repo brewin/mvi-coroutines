@@ -1,10 +1,10 @@
 package com.github.brewin.mvicoroutines.view.base
 
-import android.arch.lifecycle.ViewModel
-import android.arch.lifecycle.ViewModelProvider
-import android.arch.lifecycle.ViewModelProviders
-import android.support.annotation.MainThread
-import android.support.v4.app.Fragment
+import androidx.annotation.MainThread
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.android.UI
@@ -21,6 +21,16 @@ interface Renderer<I : Intent, T : Task, S : State> {
 interface Intent
 interface Task
 interface State
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified VM : ViewModel> Fragment.machineProvider(
+    mode: LazyThreadSafetyMode = LazyThreadSafetyMode.NONE,
+    crossinline provider: () -> VM
+) = lazy(mode) {
+    ViewModelProviders.of(this, object : ViewModelProvider.Factory {
+        override fun <T1 : ViewModel> create(aClass: Class<T1>) = provider() as T1
+    }).get(VM::class.java)
+}
 
 abstract class Machine<I : Intent, T : Task, S : State>(initialState: S) : ViewModel() {
 
@@ -65,14 +75,4 @@ abstract class Machine<I : Intent, T : Task, S : State>(initialState: S) : ViewM
         stopRendering()
         Timber.d("onCleared() called")
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-inline fun <reified VM : ViewModel> Fragment.machineProvider(
-    mode: LazyThreadSafetyMode = LazyThreadSafetyMode.NONE,
-    crossinline provider: () -> VM
-) = lazy(mode) {
-    ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-        override fun <T1 : ViewModel> create(aClass: Class<T1>) = provider() as T1
-    }).get(VM::class.java)
 }

@@ -2,7 +2,7 @@ package com.github.brewin.mvicoroutines.view.main
 
 import android.net.Uri
 import android.os.Parcelable
-import androidx.net.toUri
+import androidx.core.net.toUri
 import com.github.brewin.mvicoroutines.common.*
 import com.github.brewin.mvicoroutines.data.GitHubRepos
 import com.github.brewin.mvicoroutines.data.Repository
