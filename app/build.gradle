@@ -64,6 +64,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-common-java8:$androidxArchVersion"
 
     // Data
+    implementation "com.squareup.moshi:moshi-kotlin:$moshiVersion"
+    //implementation "com.squareup.moshi:moshi-adapters:$moshiVersion"
     implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
     implementation "com.squareup.retrofit2:converter-moshi:$retrofitVersion"
     implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"

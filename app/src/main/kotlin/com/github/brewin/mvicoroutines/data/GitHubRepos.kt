@@ -1,5 +1,7 @@
 package com.github.brewin.mvicoroutines.data
 
+import androidx.core.net.toUri
+import com.github.brewin.mvicoroutines.model.RepoItem
 import com.squareup.moshi.Json
 
 data class GitHubRepos(
@@ -206,4 +208,9 @@ data class GitHubRepos(
             val url: String? = null
         )
     }
+
+    val asRepoItemList: List<RepoItem>
+        get() = items.orEmpty()
+            .filterNot { it.name.isNullOrBlank() || it.htmlUrl.isNullOrBlank() }
+            .map { RepoItem(it.name!!, it.htmlUrl!!.toUri()) }
 }

@@ -12,7 +12,7 @@ buildscript {
         androidKtxVersion = '1.0.0-rc02'
         archVersion = '1.1.1'
         okHttpVersion = '3.11.0'
-        retrofitVersion = '2.3.0' // Breaks with 2.4.0
+        retrofitVersion = '2.4.0'
         retrofitCoroutinesVersion = '1.0.0'
         kotlinxCoroutinesVersion = '0.25.3'
         moshiVersion = '1.6.0'

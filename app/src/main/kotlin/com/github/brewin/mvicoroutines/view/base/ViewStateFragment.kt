@@ -4,30 +4,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 
-abstract class RendererFragment<I : Intent, T : Task, S : State> : Fragment(), Renderer<I, T, S> {
+abstract class ViewStateFragment<VS : ViewState> : Fragment(), ViewStateSubscriber<VS> {
 
-    @LayoutRes
-    protected abstract fun getLayoutId(): Int
-
-    protected abstract fun setupUi()
+    abstract val layoutRes: Int
+    abstract val machine: ViewStateMachine<VS>
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? = inflater.inflate(getLayoutId(), container, false)
+    ): View? = inflater.inflate(layoutRes, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupUi()
-        machine.startRendering(this)
+        machine.subscribe(this)
     }
 
     override fun onDestroy() {
-        machine.stopRendering()
+        machine.unsubscribe(this)
         super.onDestroy()
     }
 }

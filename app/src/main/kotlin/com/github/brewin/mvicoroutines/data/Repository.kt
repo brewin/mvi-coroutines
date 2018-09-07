@@ -1,8 +1,9 @@
 package com.github.brewin.mvicoroutines.data
 
-class Repository(private val service: GitHubApi) {
+import com.github.brewin.mvicoroutines.model.RepoItem
 
-    suspend fun searchRepos(query: String): GitHubRepos =
-        service.searchRepos(query).await()
+class Repository(private val gitHubApi: GitHubApi) {
+
+    suspend fun searchRepos(query: String): List<RepoItem> =
+        gitHubApi.searchRepos(query).await().asRepoItemList
 }
-
