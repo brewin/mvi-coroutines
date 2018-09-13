@@ -1,9 +1,9 @@
-package com.github.brewin.mvicoroutines.data
+package com.github.brewin.mvicoroutines.data.remote
 
-import com.jakewharton.retrofit2.adapter.kotlin.coroutines.experimental.CoroutineCallAdapterFactory
+import com.github.brewin.mvicoroutines.data.GitHubRepos
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.Deferred
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
@@ -23,6 +23,7 @@ interface GitHubApi {
                 )
             )
             .addCallAdapterFactory(CoroutineCallAdapterFactory())
-            .build().create(GitHubApi::class.java)
+            .build()
+            .create(GitHubApi::class.java)
     }
 }

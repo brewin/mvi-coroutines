@@ -1,36 +1,40 @@
 package com.github.brewin.mvicoroutines.view.main
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.View
-import android.widget.Button
 import androidx.appcompat.widget.SearchView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.forEach
-import androidx.core.view.isVisible
 import com.github.brewin.mvicoroutines.R
-import com.github.brewin.mvicoroutines.data.GitHubApi
 import com.github.brewin.mvicoroutines.data.Repository
-import com.github.brewin.mvicoroutines.model.RepoItem
+import com.github.brewin.mvicoroutines.data.remote.GitHubApi
 import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.view.base.ViewStateFragment
+import com.github.brewin.mvicoroutines.view.base.StateSubscriberFragment
 import com.github.brewin.mvicoroutines.view.base.machineProvider
 import hideKeyboard
 import kotlinx.android.synthetic.main.fragment_main.*
-import timber.log.Timber
+import kotlinx.android.synthetic.main.item_state.view.*
+import java.text.SimpleDateFormat
 
-class MainFragment : ViewStateFragment<MainState>() {
+class MainFragment : StateSubscriberFragment<MainState>() {
 
     override val layoutRes = R.layout.fragment_main
 
     override val machine by machineProvider { MainMachine(Repository(GitHubApi.api)) }
 
     private val listAdapter by lazy {
-        GenericListAdapter<Button, RepoItem>(R.layout.item_repo) { button, (name, url) ->
-            button.text = name
-            button.setOnClickListener {
-                context?.startActivity(Intent(Intent.ACTION_VIEW, url))
+        GenericListAdapter<ConstraintLayout, MainState>(R.layout.item_state) { layout, state ->
+            layout.apply {
+                timeView.text = SimpleDateFormat("HH:mm:ss").format(state.time)
+                isLoadingView.text = state.isLoading.toString()
+                errorView.text = state.error.toString()
+                queryView.text = state.query
+                repoListView.text = state.repoList.asSequence()
+                    .take(5)
+                    .map { it.name }
+                    .joinToString()
             }
         }
     }
@@ -42,7 +46,7 @@ class MainFragment : ViewStateFragment<MainState>() {
         swipeRefreshLayout.setOnRefreshListener {
             machine.refresh()
         }
-        reposRecyclerView.adapter = listAdapter
+        stateListView.adapter = listAdapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -53,8 +57,8 @@ class MainFragment : ViewStateFragment<MainState>() {
                     (it.actionView as SearchView).setOnQueryTextListener(
                         object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
-                                if (!query.isNullOrBlank()) {
-                                    machine.search(query!!)
+                                if (query != null && query.isNotBlank()) {
+                                    machine.search(query.trim())
                                 }
                                 hideKeyboard()
                                 return true
@@ -77,11 +81,7 @@ class MainFragment : ViewStateFragment<MainState>() {
     }
 
     override fun onNewState(old: MainState, new: MainState) {
-        Timber.d("Old ViewState: $old")
-        Timber.d("New ViewState: $new")
-        emptyView.text = new.error?.message ?: "Search for GitHub repos"
-        emptyView.isVisible = new.repoList.isEmpty()
-        listAdapter.items = new.repoList
+        listAdapter.items = listAdapter.items.toMutableList().apply { add(0, new) }
         swipeRefreshLayout.isRefreshing = new.isLoading
     }
 }

@@ -6,10 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 
-abstract class ViewStateFragment<VS : ViewState> : Fragment(), ViewStateSubscriber<VS> {
+abstract class StateSubscriberFragment<S : State> : Fragment(), StateSubscriber<S> {
 
     abstract val layoutRes: Int
-    abstract val machine: ViewStateMachine<VS>
+    abstract val machine: StateMachine<S>
 
     override fun onCreateView(
         inflater: LayoutInflater,
