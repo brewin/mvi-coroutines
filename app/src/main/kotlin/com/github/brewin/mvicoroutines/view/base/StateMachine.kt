@@ -11,10 +11,10 @@ import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-interface State {
-    val isLoading: Boolean
-    val error: Throwable?
-}
+sealed class Async
+
+
+interface State
 
 interface StateSubscriber<S : State> {
     @MainThread
@@ -51,8 +51,8 @@ abstract class StateMachine<S : State>(
     fun subscribe(subscriber: StateSubscriber<S>) {
         subscribers[subscriber] = broadcast.openSubscription()
             .apply {
-                var oldState = broadcast.value
                 launch(Dispatchers.Main) {
+                    var oldState = broadcast.value
                     consumeEach { newState ->
                         subscriber.onNewState(oldState, newState)
                         oldState = newState

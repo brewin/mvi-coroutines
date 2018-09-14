@@ -2,7 +2,6 @@ package com.github.brewin.mvicoroutines.view.main
 
 import android.os.Parcelable
 import com.github.brewin.mvicoroutines.common.Failure
-import com.github.brewin.mvicoroutines.common.Loading
 import com.github.brewin.mvicoroutines.common.Success
 import com.github.brewin.mvicoroutines.common.resultOf
 import com.github.brewin.mvicoroutines.data.Repository
@@ -14,8 +13,8 @@ import java.util.*
 
 @Parcelize
 data class MainState(
-    override val isLoading: Boolean = false,
-    override val error: Throwable? = null,
+    val isLoading: Boolean = false,
+    val error: Throwable? = null,
     val time: Long = Calendar.getInstance().timeInMillis,
     val query: String = "",
     val repoList: List<RepoItem> = emptyList()
@@ -38,12 +37,6 @@ class MainMachine(
         setState {
             val result = resultOf { repository.searchRepos(query) }
             when (result) {
-                is Loading -> copy(
-                    isLoading = true,
-                    error = null,
-                    time = Calendar.getInstance().timeInMillis,
-                    query = query
-                )
                 is Success -> copy(
                     isLoading = false,
                     error = null,
