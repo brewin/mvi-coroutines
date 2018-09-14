@@ -13,7 +13,7 @@ buildscript {
         archVersion = '1.1.1'
         okHttpVersion = '3.11.0'
         retrofitVersion = '2.4.0'
-        retrofitCoroutinesVersion = '0.9.0'
+        retrofitCoroutinesVersion = '0.9.1'
         kotlinxCoroutinesVersion = '0.26.0-eap13'
         moshiVersion = '1.6.0'
         timberVersion = '4.7.1'
