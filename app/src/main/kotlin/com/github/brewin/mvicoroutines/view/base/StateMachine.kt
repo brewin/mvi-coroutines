@@ -11,14 +11,11 @@ import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-sealed class Async
-
-
 interface State
 
 interface StateSubscriber<S : State> {
     @MainThread
-    fun onNewState(old: S, new: S)
+    fun onNewState(old: S?, new: S)
 }
 
 abstract class StateMachine<S : State>(
@@ -27,8 +24,8 @@ abstract class StateMachine<S : State>(
 ) : ViewModel(), CoroutineScope {
 
     sealed class Msg<S> {
+        class SetState<S>(val block: suspend S.() -> S) : Msg<S>()
         class GetState<S>(val block: S.() -> Unit) : Msg<S>()
-        class SetState<S>(val reducer: suspend S.() -> S) : Msg<S>()
     }
 
     private val broadcast = ConflatedBroadcastChannel(initialState)
@@ -38,8 +35,8 @@ abstract class StateMachine<S : State>(
         val getBlocks = ArrayDeque<S.() -> Unit>()
         consumeEach { msg ->
             when (msg) {
-                is Msg.GetState -> getBlocks.push(msg.block)
-                is Msg.SetState -> broadcast.offer(msg.reducer(broadcast.value))
+                is Msg.SetState -> broadcast.send(msg.block(broadcast.value))
+                is Msg.GetState -> getBlocks.add(msg.block)
             }
             if (isEmpty) {
                 getBlocks.forEach { it(broadcast.value) }
@@ -52,7 +49,7 @@ abstract class StateMachine<S : State>(
         subscribers[subscriber] = broadcast.openSubscription()
             .apply {
                 launch(Dispatchers.Main) {
-                    var oldState = broadcast.value
+                    var oldState: S? = null
                     consumeEach { newState ->
                         subscriber.onNewState(oldState, newState)
                         oldState = newState
@@ -70,8 +67,8 @@ abstract class StateMachine<S : State>(
         actor.offer(Msg.GetState(block))
     }
 
-    fun setState(reducer: suspend S.() -> S) {
-        actor.offer(Msg.SetState(reducer))
+    fun setState(block: suspend S.() -> S) {
+        actor.offer(Msg.SetState(block))
     }
 
     override fun onCleared() {

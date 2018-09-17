@@ -33,15 +33,13 @@ class MainFragment : StateSubscriberFragment<MainState>() {
                 queryView.text = state.query
                 repoListView.text = state.repoList.asSequence()
                     .take(5)
-                    .map { it.name }
-                    .joinToString()
+                    .joinToString { it.name }
             }
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setHasOptionsMenu(true)
         swipeRefreshLayout.setOnRefreshListener {
             machine.refresh()
@@ -80,8 +78,11 @@ class MainFragment : StateSubscriberFragment<MainState>() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun onNewState(old: MainState, new: MainState) {
-        listAdapter.items = listAdapter.items.toMutableList().apply { add(0, new) }
+    override fun onNewState(old: MainState?, new: MainState) {
+        listAdapter.items = listAdapter.items.toMutableList()
+            .apply {
+                add(0, new)
+            }
         swipeRefreshLayout.isRefreshing = new.isLoading
     }
 }
