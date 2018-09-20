@@ -19,11 +19,11 @@ abstract class StateSubscriberFragment<S : State> : Fragment(), StateSubscriber<
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        machine.subscribe(this)
+        machine.addSubscriber(this)
     }
 
     override fun onDestroy() {
-        machine.unsubscribe(this)
+        machine.removeSubscriber(this)
         super.onDestroy()
     }
 }

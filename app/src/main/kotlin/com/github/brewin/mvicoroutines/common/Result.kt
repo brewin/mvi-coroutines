@@ -1,5 +1,8 @@
 package com.github.brewin.mvicoroutines.common
 
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+
 @Suppress("unused")
 sealed class Result<out T> {
 
@@ -22,4 +25,12 @@ inline fun <T> resultOf(block: () -> T): Result<T> = try {
     Success(block())
 } catch (e: Exception) {
     Failure(e)
+}
+
+fun <T> asyncResultOf(block: suspend () -> T): Deferred<Result<T>> = async {
+    try {
+        Success(block())
+    } catch (e: Exception) {
+        Failure(e)
+    }
 }

@@ -34,6 +34,7 @@ class MainFragment : StateSubscriberFragment<MainState>() {
                 repoListView.text = state.repoList.asSequence()
                     .take(5)
                     .joinToString { it.name }
+                countTestView.text = state.countTest.toString()
             }
         }
     }
@@ -79,10 +80,7 @@ class MainFragment : StateSubscriberFragment<MainState>() {
     }
 
     override fun onNewState(old: MainState?, new: MainState) {
-        listAdapter.items = listAdapter.items.toMutableList()
-            .apply {
-                add(0, new)
-            }
+        listAdapter.items = listOf(new) + listAdapter.items
         swipeRefreshLayout.isRefreshing = new.isLoading
     }
 }

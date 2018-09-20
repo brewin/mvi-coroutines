@@ -28,14 +28,15 @@ abstract class StateMachine<S : State>(
         class GetState<S>(val block: S.() -> Unit) : Msg<S>()
     }
 
+    // NOTE: Not all states are guaranteed to be sent to subscribers, only the most recent. In some
+    // cases, like for a clock or a timer, an ArrayBroadcastChannel would need to be used instead.
     private val broadcast = ConflatedBroadcastChannel(initialState)
-    private val subscribers = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
 
     private val actor = actor<Msg<S>>(Dispatchers.IO, Channel.UNLIMITED) {
         val getBlocks = ArrayDeque<S.() -> Unit>()
         consumeEach { msg ->
             when (msg) {
-                is Msg.SetState -> broadcast.send(msg.block(broadcast.value))
+                is Msg.SetState -> broadcast.offer(msg.block(broadcast.value))
                 is Msg.GetState -> getBlocks.add(msg.block)
             }
             if (isEmpty) {
@@ -45,20 +46,21 @@ abstract class StateMachine<S : State>(
         }
     }
 
-    fun subscribe(subscriber: StateSubscriber<S>) {
-        subscribers[subscriber] = broadcast.openSubscription()
-            .apply {
-                launch(Dispatchers.Main) {
-                    var oldState: S? = null
-                    consumeEach { newState ->
-                        subscriber.onNewState(oldState, newState)
-                        oldState = newState
-                    }
+    private val subscribers = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
+
+    fun addSubscriber(subscriber: StateSubscriber<S>) {
+        subscribers[subscriber] = broadcast.openSubscription().apply {
+            launch(Dispatchers.Main) {
+                var old: S? = null
+                consumeEach { new ->
+                    subscriber.onNewState(old, new)
+                    old = new
                 }
             }
+        }
     }
 
-    fun unsubscribe(subscriber: StateSubscriber<S>) {
+    fun removeSubscriber(subscriber: StateSubscriber<S>) {
         subscribers[subscriber]?.cancel()
         subscribers.remove(subscriber)
     }
@@ -73,7 +75,7 @@ abstract class StateMachine<S : State>(
 
     override fun onCleared() {
         broadcast.close()
-        coroutineContext.cancel()
+        coroutineContext.cancelChildren()
         super.onCleared()
     }
 }

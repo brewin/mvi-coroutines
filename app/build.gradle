@@ -3,12 +3,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
-kotlin {
-    experimental {
-        coroutines "enable"
-    }
-}
-
 androidExtensions {
     experimental = true
 }
@@ -17,7 +11,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         buildToolsVersion '28.0.2'
-        applicationId "com.github.brewin.coroutinesapp"
+        applicationId "com.github.brewin.mvicoroutines"
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
@@ -53,8 +47,8 @@ dependencies {
     // UI
     implementation "androidx.legacy:legacy-support-v4:$androidxVersion"
     implementation "androidx.appcompat:appcompat:$androidxVersion"
-    implementation "androidx.drawerlayout:drawerlayout:$androidxVersion"
-    implementation "androidx.cardview:cardview:$androidxVersion"
+    //implementation "androidx.drawerlayout:drawerlayout:$androidxVersion"
+    //implementation "androidx.cardview:cardview:$androidxVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
     implementation "com.google.android.material:material:$materialVersion"
 
@@ -69,7 +63,7 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
     implementation "com.squareup.retrofit2:converter-moshi:$retrofitVersion"
     implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
-    //implementation "com.squareup.okhttp3:logging-interceptor:$okHttpVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okHttpVersion"
     implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:$retrofitCoroutinesVersion"
 
     // Logging
