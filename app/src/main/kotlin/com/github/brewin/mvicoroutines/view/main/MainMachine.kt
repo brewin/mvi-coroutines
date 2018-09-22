@@ -41,9 +41,10 @@ class MainMachine(
         // Test to make sure all setState run and run in correct order
         setStateFourTimes()
 
-        val task = async { repository.searchRepos(query) }
+        val async = async { repository.searchRepos(query) }
         setState {
-            when (val result = task.await()) {
+            when (
+                val result = async.await()) {
                 is Success -> copy(
                     isLoading = false,
                     error = null,
@@ -72,13 +73,11 @@ class MainMachine(
 
     private fun setStateFourTimes() {
         (1..4).forEach { n ->
-            val task = async { delay((1000)) }
+            val async = async { delay((500..5000).random()) }
             setState {
-                task.await()
+                async.await()
                 copy(countTest = countTest + n)
             }
         }
     }
 }
-
-

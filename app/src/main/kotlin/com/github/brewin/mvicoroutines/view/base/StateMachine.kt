@@ -18,6 +18,9 @@ interface StateSubscriber<S : State> {
     fun onNewState(old: S?, new: S)
 }
 
+/*
+ * NOTE: Not all states are guaranteed to be sent to subscribers, only the most recent.
+ */
 abstract class StateMachine<S : State>(
     initialState: S,
     final override val coroutineContext: CoroutineContext = Job()
@@ -28,8 +31,6 @@ abstract class StateMachine<S : State>(
         class GetState<S>(val block: S.() -> Unit) : Msg<S>()
     }
 
-    // NOTE: Not all states are guaranteed to be sent to subscribers, only the most recent. In some
-    // cases, like for a clock or a timer, an ArrayBroadcastChannel would need to be used instead.
     private val broadcast = ConflatedBroadcastChannel(initialState)
 
     private val actor = actor<Msg<S>>(Dispatchers.IO, Channel.UNLIMITED) {
