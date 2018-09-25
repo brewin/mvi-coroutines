@@ -69,7 +69,7 @@ class MainFragment : StateSubscriberFragment<MainState>() {
                         })
                 }
                 R.id.action_refresh -> {
-                    it.setOnMenuItemClickListener { _ ->
+                    it.setOnMenuItemClickListener {
                         machine.refresh()
                         true
                     }

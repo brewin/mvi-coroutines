@@ -1,18 +1,15 @@
 package com.github.brewin.mvicoroutines.view.main
 
-import android.os.Parcelable
 import com.github.brewin.mvicoroutines.common.Failure
 import com.github.brewin.mvicoroutines.common.Success
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.model.RepoItem
 import com.github.brewin.mvicoroutines.view.base.State
 import com.github.brewin.mvicoroutines.view.base.StateMachine
-import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import java.util.*
 
-@Parcelize
 data class MainState(
     val isLoading: Boolean = false,
     val error: Throwable? = null,
@@ -20,7 +17,7 @@ data class MainState(
     val query: String = "",
     val repoList: List<RepoItem> = emptyList(),
     val countTest: List<Int> = emptyList()
-) : State, Parcelable
+) : State()
 
 class MainMachine(
     private val repository: Repository,
@@ -28,7 +25,7 @@ class MainMachine(
 ) : StateMachine<MainState>(initialState) {
 
     fun search(query: String) {
-        setState {
+        sendState {
             copy(
                 isLoading = true,
                 error = null,
@@ -38,24 +35,22 @@ class MainMachine(
             )
         }
 
-        // Test to make sure all setState run and run in correct order
+        // Test to make sure all sendState run and run in correct order
         setStateFourTimes()
 
-        val async = async { repository.searchRepos(query) }
-        setState {
-            when (
-                val result = async.await()) {
+        sendState({ repository.searchRepos(query) }) {
+            when (it) {
                 is Success -> copy(
                     isLoading = false,
                     error = null,
                     query = query,
                     time = Calendar.getInstance().timeInMillis,
-                    repoList = result.value,
+                    repoList = it.value,
                     countTest = countTest + 5
                 )
                 is Failure -> copy(
                     isLoading = false,
-                    error = result.error,
+                    error = it.error,
                     query = query,
                     time = Calendar.getInstance().timeInMillis,
                     repoList = emptyList(),
@@ -73,9 +68,8 @@ class MainMachine(
 
     private fun setStateFourTimes() {
         (1..4).forEach { n ->
-            val async = async { delay((500..5000).random()) }
-            setState {
-                async.await()
+            val deferred = async { delay((500..5000).random()) }
+            sendState(deferred) {
                 copy(countTest = countTest + n)
             }
         }

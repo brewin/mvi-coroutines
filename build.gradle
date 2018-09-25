@@ -15,7 +15,7 @@ buildscript {
         retrofitVersion = '2.4.0'
         retrofitCoroutinesVersion = '0.9.2'
         kotlinxCoroutinesVersion = '0.26.1-eap13'
-        moshiVersion = '1.6.0'
+        moshiVersion = '1.7.0'
         timberVersion = '4.7.1'
         androidTestRunnerVersion = '1.0.2'
         espressoVersion = '3.0.2'

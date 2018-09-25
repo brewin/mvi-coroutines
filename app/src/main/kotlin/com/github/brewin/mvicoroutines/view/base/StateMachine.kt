@@ -1,17 +1,20 @@
 package com.github.brewin.mvicoroutines.view.base
 
+import android.os.Parcelable
 import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
+import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.Main
 import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-interface State
+@Parcelize
+open class State : Parcelable
 
 interface StateSubscriber<S : State> {
     @MainThread
@@ -27,51 +30,59 @@ abstract class StateMachine<S : State>(
 ) : ViewModel(), CoroutineScope {
 
     sealed class Msg<S> {
-        class SetState<S>(val block: suspend S.() -> S) : Msg<S>()
-        class GetState<S>(val block: S.() -> Unit) : Msg<S>()
+        class SendState<S>(val reducer: S.() -> S) : Msg<S>()
+        class SendStateAsync<S>(val reducer: suspend S.() -> S) : Msg<S>()
+        class WithState<S>(val block: S.() -> Unit) : Msg<S>()
     }
 
     private val broadcast = ConflatedBroadcastChannel(initialState)
 
     private val actor = actor<Msg<S>>(Dispatchers.IO, Channel.UNLIMITED) {
-        val getBlocks = ArrayDeque<S.() -> Unit>()
-        consumeEach { msg ->
-            when (msg) {
-                is Msg.SetState -> broadcast.offer(msg.block(broadcast.value))
-                is Msg.GetState -> getBlocks.add(msg.block)
+        val withBlocks = ArrayDeque<S.() -> Unit>()
+        consumeEach {
+            when (it) {
+                is Msg.SendState -> broadcast.offer(it.reducer(broadcast.value))
+                is Msg.SendStateAsync -> broadcast.offer(it.reducer(broadcast.value))
+                is Msg.WithState -> withBlocks.offer(it.block)
             }
-            if (isEmpty) {
-                getBlocks.forEach { it(broadcast.value) }
-                getBlocks.clear()
-            }
+            while (isEmpty) withBlocks.poll()?.invoke(broadcast.value) ?: break
         }
     }
 
-    private val subscribers = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
+    private val subscriptions = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
 
     fun addSubscriber(subscriber: StateSubscriber<S>) {
-        subscribers[subscriber] = broadcast.openSubscription().apply {
+        subscriptions[subscriber] = broadcast.openSubscription().apply {
             launch(Dispatchers.Main) {
                 var old: S? = null
-                consumeEach { new ->
-                    subscriber.onNewState(old, new)
-                    old = new
+                consumeEach {
+                    subscriber.onNewState(old, it)
+                    old = it
                 }
             }
         }
     }
 
     fun removeSubscriber(subscriber: StateSubscriber<S>) {
-        subscribers[subscriber]?.cancel()
-        subscribers.remove(subscriber)
+        subscriptions[subscriber]?.cancel()
+        subscriptions.remove(subscriber)
     }
 
     fun withState(block: S.() -> Unit) {
-        actor.offer(Msg.GetState(block))
+        actor.offer(Msg.WithState(block))
     }
 
-    fun setState(block: suspend S.() -> S) {
-        actor.offer(Msg.SetState(block))
+    fun sendState(reducer: S.() -> S) {
+        actor.offer(Msg.SendState(reducer))
+    }
+
+    fun <T> sendState(asyncBlock: suspend () -> T, reducer: S.(T) -> S) {
+        val deferred = async { asyncBlock() }
+        actor.offer(Msg.SendStateAsync { reducer(deferred.await()) })
+    }
+
+    fun <T> sendState(deferred: Deferred<T>, reducer: S.(T) -> S) {
+        actor.offer(Msg.SendStateAsync { reducer(deferred.await()) })
     }
 
     override fun onCleared() {
