@@ -34,7 +34,7 @@ class MainFragment : StateSubscriberFragment<MainState>() {
                 repoListView.text = state.repoList.asSequence()
                     .take(5)
                     .joinToString { it.name }
-                countTestView.text = state.countTest.toString()
+                countView.text = state.count.toString()
             }
         }
     }
