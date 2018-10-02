@@ -7,5 +7,4 @@ class Repository(private val gitHubApi: GitHubApi) {
 
     suspend fun searchRepos(query: String): List<RepoItem> =
         gitHubApi.searchRepos(query).await().asRepoItemList
-
 }
