@@ -10,7 +10,6 @@ androidExtensions {
 android {
     compileSdkVersion 28
     defaultConfig {
-        buildToolsVersion '28.0.2'
         applicationId "com.github.brewin.mvicoroutines"
         minSdkVersion 21
         targetSdkVersion 28

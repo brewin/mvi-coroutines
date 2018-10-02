@@ -13,10 +13,10 @@ import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-sealed class Task<V>
-class Loading<V> : Task<V>()
-data class Success<V>(val value: V) : Task<V>()
-data class Failure<V>(val error: Exception) : Task<V>()
+sealed class AsyncTry<T>
+class Loading<T> : AsyncTry<T>()
+data class Success<T>(val value: T) : AsyncTry<T>()
+data class Failure<T>(val error: Throwable) : AsyncTry<T>()
 
 @Parcelize
 open class State : Parcelable
@@ -39,32 +39,31 @@ abstract class StateMachine<S : State>(
         class WithState<S>(val block: S.() -> Unit) : Msg<S>()
     }
 
-    var state = initialState
-
-    private val broadcast = ArrayBroadcastChannel<S>(256)
-        .apply { offer(state) }
+    private val broadcast = ConflatedBroadcastChannel(initialState)
 
     private val actor = actor<Msg<S>>(Dispatchers.IO, Channel.UNLIMITED) {
         val withBlocks = ArrayDeque<S.() -> Unit>()
         consumeEach {
             when (it) {
-                is Msg.SendState -> broadcast.send(it.reducer(state))
+                is Msg.SendState -> broadcast.offer(it.reducer(broadcast.value))
                 is Msg.WithState -> withBlocks.offer(it.block)
             }
-            while (isEmpty) withBlocks.poll()?.invoke(state) ?: break
+            while (isEmpty) withBlocks.poll()?.invoke(broadcast.value) ?: break
         }
     }
 
     private val subscriptions = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
+
+    //val state: S
+    //    get() = broadcast.value
 
     fun addSubscriber(subscriber: StateSubscriber<S>) {
         subscriptions[subscriber] = broadcast.openSubscription().apply {
             launch(Dispatchers.Main) {
                 var old: S? = null
                 consumeEach {
-                    state = it
-                    subscriber.onNewState(old, state)
-                    old = state
+                    subscriber.onNewState(old, it)
+                    old = it
                 }
             }
         }
@@ -79,22 +78,29 @@ abstract class StateMachine<S : State>(
         actor.offer(Msg.WithState(block))
     }
 
-    private suspend fun sendState(reducer: S.() -> S) {
-        actor.send(Msg.SendState(reducer))
+    fun sendState(reducer: S.() -> S) {
+        actor.offer(Msg.SendState(reducer))
     }
 
-    fun <T> Deferred<T>.sendState(reducer: S.(Task<T>) -> S) =
+    fun <T> Deferred<AsyncTry<T>>.sendState(reducer: S.(AsyncTry<T>) -> S) =
         sendState({ it }, reducer)
 
-    fun <T, V> Deferred<T>.sendState(mapper: (T) -> V, reducer: S.(Task<V>) -> S) =
-        launch(Dispatchers.IO) {
-            this@StateMachine.sendState { reducer(Loading()) }
-            val task: Task<V> = try {
-                Success(mapper(await()))
+    fun <T, V> Deferred<AsyncTry<T>>.sendState(
+        mapper: (AsyncTry<T>) -> AsyncTry<V>,
+        reducer: S.(AsyncTry<V>) -> S
+    ) = launch(Dispatchers.IO) {
+        this@StateMachine.sendState { reducer(Loading()) }
+        val completed = mapper(await())
+        this@StateMachine.sendState { reducer(completed) }
+    }
+
+    fun <T> asyncTry(block: suspend CoroutineScope.() -> T): Deferred<AsyncTry<T>> =
+        async(Dispatchers.IO) {
+            try {
+                Success(block())
             } catch (e: Exception) {
-                Failure(e)
+                Failure<T>(e)
             }
-            this@StateMachine.sendState { reducer(task) }
         }
 
     override fun onCleared() {

@@ -3,7 +3,6 @@ package com.github.brewin.mvicoroutines.view.main
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.model.RepoItem
 import com.github.brewin.mvicoroutines.view.base.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -24,12 +23,19 @@ class MainMachine(
     fun search(query: String) {
         // test
         (1..4).forEach {
-            async { delay((1000..5000L).random()) }.sendState {
-                copy(count = count + 1)
+            asyncTry {
+                delay((1000..5000L).random())
+            }.sendState {
+                copy(
+                    time = Calendar.getInstance().timeInMillis,
+                    count = count + 1
+                )
             }
         }
 
-        repository.searchRepos(query).sendState {
+        asyncTry {
+            repository.searchRepos(query)
+        }.sendState {
             when (it) {
                 is Loading -> copy(
                     isLoading = true,
