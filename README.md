@@ -1,1 +1,1 @@
-Experimenting with MVI pattern on Android using Kotlin coroutines.
+Experimenting with MVI-like Android app architecture using Kotlin coroutines.
