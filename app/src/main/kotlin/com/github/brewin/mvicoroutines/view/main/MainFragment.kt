@@ -11,21 +11,21 @@ import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.data.remote.GitHubApi
 import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.view.base.StateSubscriberFragment
+import com.github.brewin.mvicoroutines.view.base.ViewStateSubscriberFragment
 import com.github.brewin.mvicoroutines.view.base.machineProvider
 import hideKeyboard
 import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.item_state.view.*
 import java.text.SimpleDateFormat
 
-class MainFragment : StateSubscriberFragment<MainState>() {
+class MainFragment : ViewStateSubscriberFragment<MainViewState>() {
 
     override val layoutRes = R.layout.fragment_main
 
     override val machine by machineProvider { MainMachine(Repository(GitHubApi.api)) }
 
     private val listAdapter by lazy {
-        GenericListAdapter<ConstraintLayout, MainState>(R.layout.item_state) { layout, state ->
+        GenericListAdapter<ConstraintLayout, MainViewState>(R.layout.item_state) { layout, state ->
             layout.apply {
                 timeView.text = SimpleDateFormat("HH:mm:ss").format(state.time)
                 isLoadingView.text = state.isLoading.toString()
@@ -79,7 +79,7 @@ class MainFragment : StateSubscriberFragment<MainState>() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun onNewState(old: MainState?, new: MainState) {
+    override fun onNewState(old: MainViewState?, new: MainViewState) {
         listAdapter.items = listOf(new) + listAdapter.items
         swipeRefreshLayout.isRefreshing = new.isLoading
     }

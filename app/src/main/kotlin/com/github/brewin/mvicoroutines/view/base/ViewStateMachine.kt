@@ -8,20 +8,21 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.*
-import kotlinx.coroutines.android.Main
 import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-sealed class AsyncTry<T>
-class Loading<T> : AsyncTry<T>()
-data class Success<T>(val value: T) : AsyncTry<T>()
-data class Failure<T>(val error: Throwable) : AsyncTry<T>()
+inline class Task<T>(val value: Deferred<TaskState<T>>)
+
+sealed class TaskState<T>
+class Started<T> : TaskState<T>()
+data class Success<T>(val value: T) : TaskState<T>()
+data class Failure<T>(val error: Throwable) : TaskState<T>()
 
 @Parcelize
-open class State : Parcelable
+open class ViewState : Parcelable
 
-interface StateSubscriber<S : State> {
+interface ViewStateSubscriber<S : ViewState> {
     @MainThread
     fun onNewState(old: S?, new: S)
 }
@@ -29,7 +30,7 @@ interface StateSubscriber<S : State> {
 /*
  * NOTE: Not all states are guaranteed to be sent to subscribers, only the most recent.
  */
-abstract class StateMachine<S : State>(
+abstract class ViewStateMachine<S : ViewState>(
     initialState: S,
     final override val coroutineContext: CoroutineContext = Job()
 ) : ViewModel(), CoroutineScope {
@@ -52,12 +53,12 @@ abstract class StateMachine<S : State>(
         }
     }
 
-    private val subscriptions = mutableMapOf<StateSubscriber<S>, ReceiveChannel<S>>()
+    private val subscriptions = mutableMapOf<ViewStateSubscriber<S>, ReceiveChannel<S>>()
 
     //val state: S
-    //    get() = broadcast.value
+    //    get() = broadcast.deferred
 
-    fun addSubscriber(subscriber: StateSubscriber<S>) {
+    fun addSubscriber(subscriber: ViewStateSubscriber<S>) {
         subscriptions[subscriber] = broadcast.openSubscription().apply {
             launch(Dispatchers.Main) {
                 var old: S? = null
@@ -69,7 +70,7 @@ abstract class StateMachine<S : State>(
         }
     }
 
-    fun removeSubscriber(subscriber: StateSubscriber<S>) {
+    fun removeSubscriber(subscriber: ViewStateSubscriber<S>) {
         subscriptions[subscriber]?.cancel()
         subscriptions.remove(subscriber)
     }
@@ -82,19 +83,18 @@ abstract class StateMachine<S : State>(
         actor.offer(Msg.SendState(reducer))
     }
 
-    fun <T> Deferred<AsyncTry<T>>.sendState(reducer: S.(AsyncTry<T>) -> S) =
-        sendState({ it }, reducer)
+    fun <T> Task<T>.start(reducer: S.(TaskState<T>) -> S) = start({ it }, reducer)
 
-    fun <T, V> Deferred<AsyncTry<T>>.sendState(
-        mapper: (AsyncTry<T>) -> AsyncTry<V>,
-        reducer: S.(AsyncTry<V>) -> S
+    fun <T, V> Task<T>.start(
+        mapper: (TaskState<T>) -> TaskState<V>,
+        reducer: S.(TaskState<V>) -> S
     ) = launch(Dispatchers.IO) {
-        this@StateMachine.sendState { reducer(Loading()) }
-        val completed = mapper(await())
-        this@StateMachine.sendState { reducer(completed) }
+        this@ViewStateMachine.sendState { reducer(Started()) }
+        val completed = mapper(value.await())
+        this@ViewStateMachine.sendState { reducer(completed) }
     }
 
-    fun <T> asyncTry(block: suspend CoroutineScope.() -> T): Deferred<AsyncTry<T>> =
+    fun <T> task(block: suspend CoroutineScope.() -> T): Task<T> = Task(
         async(Dispatchers.IO) {
             try {
                 Success(block())
@@ -102,11 +102,12 @@ abstract class StateMachine<S : State>(
                 Failure<T>(e)
             }
         }
+    )
 
     override fun onCleared() {
-        actor.close()
-        broadcast.close()
         coroutineContext.cancelChildren()
+        broadcast.close()
+        actor.close()
         super.onCleared()
     }
 }
