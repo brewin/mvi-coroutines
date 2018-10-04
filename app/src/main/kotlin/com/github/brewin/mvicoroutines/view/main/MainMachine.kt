@@ -6,7 +6,7 @@ import com.github.brewin.mvicoroutines.view.base.*
 import kotlinx.coroutines.delay
 import java.util.*
 
-data class MainViewState(
+data class MainState(
     val isLoading: Boolean = false,
     val time: Long = Calendar.getInstance().timeInMillis,
     val query: String = "",
@@ -17,15 +17,13 @@ data class MainViewState(
 
 class MainMachine(
     private val repository: Repository,
-    initialState: MainViewState = MainViewState()
-) : ViewStateMachine<MainViewState>(initialState) {
+    initialState: MainState = MainState()
+) : ViewStateMachine<MainState>(initialState) {
 
     fun search(query: String) {
-        // test
+        // Start some random tasks as a demonstration
         (1..4).forEach {
-            task {
-                delay((1000..5000L).random())
-            }.start {
+            task { delay((1000..5000L).random()) }.start {
                 copy(
                     time = Calendar.getInstance().timeInMillis,
                     count = count + 1
@@ -33,9 +31,7 @@ class MainMachine(
             }
         }
 
-        task {
-            repository.searchRepos(query)
-        }.start {
+        task { repository.searchRepos(query) }.start {
             when (it) {
                 is Started -> copy(
                     isLoading = true,

@@ -56,7 +56,7 @@ abstract class ViewStateMachine<S : ViewState>(
     private val subscriptions = mutableMapOf<ViewStateSubscriber<S>, ReceiveChannel<S>>()
 
     //val state: S
-    //    get() = broadcast.deferred
+    //    get() = broadcast.value
 
     fun addSubscriber(subscriber: ViewStateSubscriber<S>) {
         subscriptions[subscriber] = broadcast.openSubscription().apply {

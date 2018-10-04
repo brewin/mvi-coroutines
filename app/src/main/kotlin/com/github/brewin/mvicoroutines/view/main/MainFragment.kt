@@ -18,14 +18,14 @@ import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.item_state.view.*
 import java.text.SimpleDateFormat
 
-class MainFragment : ViewStateSubscriberFragment<MainViewState>() {
+class MainFragment : ViewStateSubscriberFragment<MainState>() {
 
     override val layoutRes = R.layout.fragment_main
 
     override val machine by machineProvider { MainMachine(Repository(GitHubApi.api)) }
 
     private val listAdapter by lazy {
-        GenericListAdapter<ConstraintLayout, MainViewState>(R.layout.item_state) { layout, state ->
+        GenericListAdapter<ConstraintLayout, MainState>(R.layout.item_state) { layout, state ->
             layout.apply {
                 timeView.text = SimpleDateFormat("HH:mm:ss").format(state.time)
                 isLoadingView.text = state.isLoading.toString()
@@ -79,7 +79,7 @@ class MainFragment : ViewStateSubscriberFragment<MainViewState>() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun onNewState(old: MainViewState?, new: MainViewState) {
+    override fun onNewState(old: MainState?, new: MainState) {
         listAdapter.items = listOf(new) + listAdapter.items
         swipeRefreshLayout.isRefreshing = new.isLoading
     }
