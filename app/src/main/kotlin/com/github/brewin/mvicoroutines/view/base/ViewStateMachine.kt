@@ -9,15 +9,9 @@ import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
-
-inline class Task<T>(val value: Deferred<TaskState<T>>)
-
-sealed class TaskState<T>
-class Started<T> : TaskState<T>()
-data class Success<T>(val value: T) : TaskState<T>()
-data class Failure<T>(val error: Throwable) : TaskState<T>()
 
 @Parcelize
 open class ViewState : Parcelable
@@ -27,12 +21,52 @@ interface ViewStateSubscriber<S : ViewState> {
     fun onNewState(old: S?, new: S)
 }
 
-/*
- * NOTE: Not all states are guaranteed to be sent to subscribers, only the most recent.
- */
+class ViewStateTask<S : ViewState, T>(
+    private val machine: ViewStateMachine<S>,
+    private val block: suspend CoroutineScope.() -> T
+) {
+
+    private var onStarted: (S.() -> S)? = null
+    private var onFailure: (S.(error: Exception) -> S)? = null
+    private var onSuccess: (S.(value: T) -> S)? = null
+    private var onCompleted: (S.() -> S)? = null
+
+    fun onStarted(reducer: S.() -> S): ViewStateTask<S, T> {
+        onStarted = reducer
+        return this
+    }
+
+    fun onFailure(reducer: S.(error: Exception) -> S): ViewStateTask<S, T> {
+        onFailure = reducer
+        return this
+    }
+
+    fun onSuccess(reducer: S.(value: T) -> S): ViewStateTask<S, T> {
+        onSuccess = reducer
+        return this
+    }
+
+    fun onCompleted(reducer: S.() -> S): ViewStateTask<S, T> {
+        onCompleted = reducer
+        return this
+    }
+
+    fun start(): Job = launch(machine.coroutineContext + Dispatchers.IO) {
+        onStarted?.let(machine::sendState)
+        try {
+            val value = block()
+            onSuccess?.let { machine.sendState { it(value) } }
+        } catch (error: Exception) {
+            onFailure?.let { machine.sendState { it(error) } }
+            Timber.w(error)
+        }
+        onCompleted?.let(machine::sendState)
+    }
+}
+
 abstract class ViewStateMachine<S : ViewState>(
     initialState: S,
-    final override val coroutineContext: CoroutineContext = Job()
+    override val coroutineContext: CoroutineContext = Job()
 ) : ViewModel(), CoroutineScope {
 
     sealed class Msg<S> {
@@ -83,26 +117,8 @@ abstract class ViewStateMachine<S : ViewState>(
         actor.offer(Msg.SendState(reducer))
     }
 
-    fun <T> Task<T>.start(reducer: S.(TaskState<T>) -> S) = start({ it }, reducer)
-
-    fun <T, V> Task<T>.start(
-        mapper: (TaskState<T>) -> TaskState<V>,
-        reducer: S.(TaskState<V>) -> S
-    ) = launch(Dispatchers.IO) {
-        this@ViewStateMachine.sendState { reducer(Started()) }
-        val completed = mapper(value.await())
-        this@ViewStateMachine.sendState { reducer(completed) }
-    }
-
-    fun <T> task(block: suspend CoroutineScope.() -> T): Task<T> = Task(
-        async(Dispatchers.IO) {
-            try {
-                Success(block())
-            } catch (e: Exception) {
-                Failure<T>(e)
-            }
-        }
-    )
+    fun <T> task(block: suspend CoroutineScope.() -> T): ViewStateTask<S, T> =
+        ViewStateTask(this, block)
 
     override fun onCleared() {
         coroutineContext.cancelChildren()

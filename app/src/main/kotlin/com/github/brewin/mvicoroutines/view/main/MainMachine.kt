@@ -2,7 +2,8 @@ package com.github.brewin.mvicoroutines.view.main
 
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.model.RepoItem
-import com.github.brewin.mvicoroutines.view.base.*
+import com.github.brewin.mvicoroutines.view.base.ViewState
+import com.github.brewin.mvicoroutines.view.base.ViewStateMachine
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -21,43 +22,36 @@ class MainMachine(
 ) : ViewStateMachine<MainState>(initialState) {
 
     fun search(query: String) {
-        // Start some random tasks as a demonstration
-        (1..4).forEach {
-            task { delay((1000..5000L).random()) }.start {
-                copy(
-                    time = Calendar.getInstance().timeInMillis,
-                    count = count + 1
-                )
-            }
-        }
-
-        task { repository.searchRepos(query) }.start {
-            when (it) {
-                is Started -> copy(
-                    isLoading = true,
-                    time = Calendar.getInstance().timeInMillis,
-                    query = query,
-                    count = count + 1,
-                    error = null
-                )
-                is Success -> copy(
-                    isLoading = false,
-                    query = query,
-                    time = Calendar.getInstance().timeInMillis,
-                    repoList = it.value,
-                    count = count + 1,
-                    error = null
-                )
-                is Failure -> copy(
-                    isLoading = false,
-                    query = query,
-                    time = Calendar.getInstance().timeInMillis,
-                    repoList = emptyList(),
-                    count = count + 1,
-                    error = it.error
-                )
-            }
-        }
+        task {
+            delay((2000..6000L).random())
+            repository.searchRepos(query)
+        }.onStarted {
+            copy(
+                isLoading = true,
+                time = Calendar.getInstance().timeInMillis,
+                query = query,
+                count = count + 1,
+                error = null
+            )
+        }.onFailure {
+            copy(
+                isLoading = false,
+                query = query,
+                time = Calendar.getInstance().timeInMillis,
+                repoList = emptyList(),
+                count = count + 1,
+                error = it
+            )
+        }.onSuccess {
+            copy(
+                isLoading = false,
+                query = query,
+                time = Calendar.getInstance().timeInMillis,
+                repoList = it,
+                count = count + 1,
+                error = null
+            )
+        }.start()
     }
 
     fun refresh() {
