@@ -26,41 +26,40 @@ class ViewStateTask<S : ViewState, T>(
     private val block: suspend CoroutineScope.() -> T
 ) {
 
-    private var onStarted: (S.() -> S)? = null
-    private var onFailure: (S.(error: Exception) -> S)? = null
-    private var onSuccess: (S.(value: T) -> S)? = null
-    private var onCompleted: (S.() -> S)? = null
+    private var startedReducer: (S.() -> S)? = null
+    private var failureReducer: (S.(Exception) -> S)? = null
+    private var successReducer: (S.(T) -> S)? = null
+    private var finallyReducer: (S.() -> S)? = null
 
-    fun onStarted(reducer: S.() -> S): ViewStateTask<S, T> {
-        onStarted = reducer
+    fun started(reducer: S.() -> S): ViewStateTask<S, T> {
+        startedReducer = reducer
         return this
     }
 
-    fun onFailure(reducer: S.(error: Exception) -> S): ViewStateTask<S, T> {
-        onFailure = reducer
+    fun failure(reducer: S.(Exception) -> S): ViewStateTask<S, T> {
+        failureReducer = reducer
         return this
     }
 
-    fun onSuccess(reducer: S.(value: T) -> S): ViewStateTask<S, T> {
-        onSuccess = reducer
+    fun success(reducer: S.(T) -> S): ViewStateTask<S, T> {
+        successReducer = reducer
         return this
     }
 
-    fun onCompleted(reducer: S.() -> S): ViewStateTask<S, T> {
-        onCompleted = reducer
+    fun finally(reducer: S.() -> S): ViewStateTask<S, T> {
+        finallyReducer = reducer
         return this
     }
 
     fun start(): Job = launch(machine.coroutineContext + Dispatchers.IO) {
-        onStarted?.let(machine::sendState)
+        startedReducer?.let(machine::sendState)
         try {
             val value = block()
-            onSuccess?.let { machine.sendState { it(value) } }
-        } catch (error: Exception) {
-            onFailure?.let { machine.sendState { it(error) } }
-            Timber.w(error)
+            successReducer?.let { machine.sendState { it(value) } }
+        } catch (e: Exception) {
+            failureReducer?.let { machine.sendState { it(e) } }
         }
-        onCompleted?.let(machine::sendState)
+        finallyReducer?.let(machine::sendState)
     }
 }
 
@@ -117,8 +116,7 @@ abstract class ViewStateMachine<S : ViewState>(
         actor.offer(Msg.SendState(reducer))
     }
 
-    fun <T> task(block: suspend CoroutineScope.() -> T): ViewStateTask<S, T> =
-        ViewStateTask(this, block)
+    fun <T> task(block: suspend CoroutineScope.() -> T) = ViewStateTask(this, block)
 
     override fun onCleared() {
         coroutineContext.cancelChildren()

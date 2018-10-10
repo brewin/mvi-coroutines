@@ -4,7 +4,6 @@ import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.model.RepoItem
 import com.github.brewin.mvicoroutines.view.base.ViewState
 import com.github.brewin.mvicoroutines.view.base.ViewStateMachine
-import kotlinx.coroutines.delay
 import java.util.*
 
 data class MainState(
@@ -23,9 +22,8 @@ class MainMachine(
 
     fun search(query: String) {
         task {
-            delay((2000..6000L).random())
             repository.searchRepos(query)
-        }.onStarted {
+        }.started {
             copy(
                 isLoading = true,
                 time = Calendar.getInstance().timeInMillis,
@@ -33,7 +31,7 @@ class MainMachine(
                 count = count + 1,
                 error = null
             )
-        }.onFailure {
+        }.failure {
             copy(
                 isLoading = false,
                 query = query,
@@ -42,7 +40,7 @@ class MainMachine(
                 count = count + 1,
                 error = it
             )
-        }.onSuccess {
+        }.success {
             copy(
                 isLoading = false,
                 query = query,
@@ -51,7 +49,9 @@ class MainMachine(
                 count = count + 1,
                 error = null
             )
-        }.start()
+        }/*.finally {
+            // Send some state after task completed
+        }*/.start()
     }
 
     fun refresh() {
