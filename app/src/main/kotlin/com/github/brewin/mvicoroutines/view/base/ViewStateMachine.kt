@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -51,7 +50,7 @@ class ViewStateTask<S : ViewState, T>(
         return this
     }
 
-    fun start(): Job = launch(machine.coroutineContext + Dispatchers.IO) {
+    fun start(): Job = machine.launch(Dispatchers.IO) {
         startedReducer?.let(machine::sendState)
         try {
             val value = block()
