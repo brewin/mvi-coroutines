@@ -18,11 +18,9 @@ import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.item_state.view.*
 import java.text.SimpleDateFormat
 
-class MainFragment : ViewStateSubscriberFragment<MainState>() {
+class MainFragment : ViewStateSubscriberFragment<MainMachine, MainState>() {
 
     override val layoutRes = R.layout.fragment_main
-
-    override val machine by machineProvider { MainMachine(Repository(GitHubApi.api)) }
 
     private val listAdapter by lazy {
         GenericListAdapter<ConstraintLayout, MainState>(R.layout.item_state) { layout, state ->
@@ -37,6 +35,11 @@ class MainFragment : ViewStateSubscriberFragment<MainState>() {
                 countView.text = state.count.toString()
             }
         }
+    }
+
+    override fun createMachine(savedInstanceState: Bundle?): MainMachine {
+        val initialState = savedInstanceState?.getParcelable(SAVED_VIEW_STATE) ?: MainState()
+        return machineProvider { MainMachine(initialState, Repository(GitHubApi.api)) }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -82,5 +85,16 @@ class MainFragment : ViewStateSubscriberFragment<MainState>() {
     override fun onNewState(old: MainState?, new: MainState) {
         listAdapter.items = listOf(new) + listAdapter.items
         swipeRefreshLayout.isRefreshing = new.isLoading
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        machine.withState {
+            outState.putParcelable(SAVED_VIEW_STATE, this@withState)
+            super.onSaveInstanceState(outState)
+        }
+    }
+
+    companion object {
+        const val SAVED_VIEW_STATE = "main_fragment_view_state"
     }
 }

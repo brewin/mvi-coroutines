@@ -4,8 +4,10 @@ import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.model.RepoItem
 import com.github.brewin.mvicoroutines.view.base.ViewState
 import com.github.brewin.mvicoroutines.view.base.ViewStateMachine
+import kotlinx.android.parcel.Parcelize
 import java.util.*
 
+@Parcelize
 data class MainState(
     val isLoading: Boolean = false,
     val time: Long = Calendar.getInstance().timeInMillis,
@@ -13,11 +15,11 @@ data class MainState(
     val repoList: List<RepoItem> = emptyList(),
     val count: Int = 0,
     val error: Throwable? = null
-) : ViewState()
+) : ViewState
 
 class MainMachine(
-    private val repository: Repository,
-    initialState: MainState = MainState()
+    initialState: MainState,
+    private val repository: Repository
 ) : ViewStateMachine<MainState>(initialState) {
 
     fun search(query: String) {

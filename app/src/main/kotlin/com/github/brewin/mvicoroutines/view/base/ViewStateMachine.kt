@@ -1,66 +1,20 @@
 package com.github.brewin.mvicoroutines.view.base
 
-import android.os.Parcelable
-import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
-import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-@Parcelize
-open class ViewState : Parcelable
-
-interface ViewStateSubscriber<S : ViewState> {
-    @MainThread
-    fun onNewState(old: S?, new: S)
-}
-
-class ViewStateTask<S : ViewState, T>(
-    private val machine: ViewStateMachine<S>,
-    private val block: suspend CoroutineScope.() -> T
-) {
-
-    private var startedReducer: (S.() -> S)? = null
-    private var failureReducer: (S.(Exception) -> S)? = null
-    private var successReducer: (S.(T) -> S)? = null
-    private var finallyReducer: (S.() -> S)? = null
-
-    fun started(reducer: S.() -> S): ViewStateTask<S, T> {
-        startedReducer = reducer
-        return this
-    }
-
-    fun failure(reducer: S.(Exception) -> S): ViewStateTask<S, T> {
-        failureReducer = reducer
-        return this
-    }
-
-    fun success(reducer: S.(T) -> S): ViewStateTask<S, T> {
-        successReducer = reducer
-        return this
-    }
-
-    fun finally(reducer: S.() -> S): ViewStateTask<S, T> {
-        finallyReducer = reducer
-        return this
-    }
-
-    fun start(): Job = machine.launch(Dispatchers.IO) {
-        startedReducer?.let(machine::sendState)
-        try {
-            val value = block()
-            successReducer?.let { machine.sendState { it(value) } }
-        } catch (e: Exception) {
-            failureReducer?.let { machine.sendState { it(e) } }
-        }
-        finallyReducer?.let(machine::sendState)
-    }
-}
+@Suppress("UNCHECKED_CAST")
+inline fun <reified M : ViewStateMachine<*>> Fragment.machineProvider(
+    crossinline provider: () -> M
+) = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
+    override fun <T1 : ViewModel> create(aClass: Class<T1>) = provider() as T1
+}).get(M::class.java)
 
 abstract class ViewStateMachine<S : ViewState>(
     initialState: S,
@@ -123,14 +77,4 @@ abstract class ViewStateMachine<S : ViewState>(
         actor.close()
         super.onCleared()
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-inline fun <reified VM : ViewModel> Fragment.machineProvider(
-    mode: LazyThreadSafetyMode = LazyThreadSafetyMode.NONE,
-    crossinline provider: () -> VM
-) = lazy(mode) {
-    ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-        override fun <T1 : ViewModel> create(aClass: Class<T1>) = provider() as T1
-    }).get(VM::class.java)
 }
