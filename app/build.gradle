@@ -44,7 +44,6 @@ dependencies {
     implementation "androidx.core:core-ktx:$androidKtxVersion"
 
     // UI
-    implementation "androidx.legacy:legacy-support-v4:$androidxVersion"
     implementation "androidx.appcompat:appcompat:$androidxVersion"
     //implementation "androidx.drawerlayout:drawerlayout:$androidxVersion"
     //implementation "androidx.cardview:cardview:$androidxVersion"

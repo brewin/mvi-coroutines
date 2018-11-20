@@ -2,7 +2,7 @@ package com.github.brewin.mvicoroutines.view.base
 
 import androidx.annotation.MainThread
 
-interface ViewStateSubscriber<S : ViewState> {
+interface StateStatusSubscriber<SS : StateStatus<S>, S : State> {
     @MainThread
-    fun onNewState(old: S?, new: S)
+    fun onStateStatus(stateStatus: SS)
 }

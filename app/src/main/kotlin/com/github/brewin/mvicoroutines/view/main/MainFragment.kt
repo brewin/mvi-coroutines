@@ -10,36 +10,29 @@ import androidx.core.view.forEach
 import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.Repository
 import com.github.brewin.mvicoroutines.data.remote.GitHubApi
+import com.github.brewin.mvicoroutines.model.RepoItem
 import com.github.brewin.mvicoroutines.view.base.GenericListAdapter
-import com.github.brewin.mvicoroutines.view.base.ViewStateSubscriberFragment
-import com.github.brewin.mvicoroutines.view.base.machineProvider
+import com.github.brewin.mvicoroutines.view.base.StateStatusSubscriberFragment
+import com.google.android.material.snackbar.Snackbar
 import hideKeyboard
 import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.item_state.view.*
-import java.text.SimpleDateFormat
 
-class MainFragment : ViewStateSubscriberFragment<MainMachine, MainState>() {
+class MainFragment : StateStatusSubscriberFragment<MainMachine, MainStateStatus, MainState>() {
 
     override val layoutRes = R.layout.fragment_main
 
-    private val listAdapter by lazy {
-        GenericListAdapter<ConstraintLayout, MainState>(R.layout.item_state) { layout, state ->
-            layout.apply {
-                timeView.text = SimpleDateFormat("HH:mm:ss").format(state.time)
-                isLoadingView.text = state.isLoading.toString()
-                errorView.text = state.error.toString()
-                queryView.text = state.query
-                repoListView.text = state.repoList.asSequence()
-                    .take(5)
-                    .joinToString { it.name }
-                countView.text = state.count.toString()
-            }
+    private val repoListAdapter by lazy {
+        GenericListAdapter<ConstraintLayout, RepoItem>(R.layout.item_state) { layout, repoItem ->
+            layout.repoName.text = repoItem.name
         }
     }
 
     override fun createMachine(savedInstanceState: Bundle?): MainMachine {
-        val initialState = savedInstanceState?.getParcelable(SAVED_VIEW_STATE) ?: MainState()
-        return machineProvider { MainMachine(initialState, Repository(GitHubApi.api)) }
+        val initialStateStatus = MainStateStatus.Initial(
+            savedInstanceState?.getParcelable(SAVED_VIEW_STATE) ?: MainState()
+        )
+        return machineProvider { MainMachine(initialStateStatus, Repository(GitHubApi.api)) }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -48,7 +41,7 @@ class MainFragment : ViewStateSubscriberFragment<MainMachine, MainState>() {
         swipeRefreshLayout.setOnRefreshListener {
             machine.refresh()
         }
-        stateListView.adapter = listAdapter
+        repoListView.adapter = repoListAdapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -82,9 +75,21 @@ class MainFragment : ViewStateSubscriberFragment<MainMachine, MainState>() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun onNewState(old: MainState?, new: MainState) {
-        listAdapter.items = listOf(new) + listAdapter.items
-        swipeRefreshLayout.isRefreshing = new.isLoading
+    override fun onStateStatus(stateStatus: MainStateStatus) {
+        when (stateStatus) {
+            is MainStateStatus.Initial, is MainStateStatus.Results -> {
+                repoListAdapter.items = stateStatus.state.repoList
+            }
+            is MainStateStatus.Loading -> {
+                swipeRefreshLayout.isRefreshing = stateStatus.isLoading
+            }
+            is MainStateStatus.Error -> {
+                view?.let {
+                    Snackbar.make(it, stateStatus.exception.localizedMessage, Snackbar.LENGTH_LONG)
+                        .show()
+                }
+            }
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
