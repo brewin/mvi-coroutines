@@ -1,1 +1,1 @@
-Experimenting with MVI-like Android app architecture using Kotlin coroutines.
+An experimental Android app using a very simple Clean/MVI architecture built on Kotlin coroutines.

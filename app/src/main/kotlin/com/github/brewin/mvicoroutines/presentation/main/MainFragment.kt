@@ -15,7 +15,7 @@ import com.github.brewin.mvicoroutines.presentation.common.GenericListAdapter
 import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
 import hideKeyboard
-import kotlinx.android.synthetic.main.item_state.view.*
+import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
@@ -27,7 +27,7 @@ class MainFragment : Fragment(), CoroutineScope {
     private lateinit var machine: MainMachine
 
     private val repoListAdapter by lazy {
-        GenericListAdapter<ConstraintLayout, RepoEntity>(R.layout.item_state) { layout, repoItem ->
+        GenericListAdapter<ConstraintLayout, RepoEntity>(R.layout.repo_item) { layout, repoItem ->
             layout.repoName.text = repoItem.name
         }
     }
@@ -39,11 +39,7 @@ class MainFragment : Fragment(), CoroutineScope {
     ): View? {
         machine = provideMachine {
             val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.Default()
-            val searchUseCase = SearchReposUseCase(
-                GitHubRepositoryImpl(
-                    GitHubApi.api
-                )
-            )
+            val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubApi.api))
             MainMachine(initial, searchUseCase)
         }
         return inflater.inflate(R.layout.main_fragment, container, false)
