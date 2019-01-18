@@ -1,6 +1,6 @@
 package com.github.brewin.mvicoroutines.data.remote
 
-import com.github.brewin.mvicoroutines.data.GitHubRepos
+import com.github.brewin.mvicoroutines.data.remote.response.GitHubRepoSearchResponse
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -15,7 +15,7 @@ import retrofit2.http.Query
 interface GitHubApi {
 
     @GET("/search/repositories?sort=updated")
-    fun searchRepos(@Query("q") query: String): Deferred<GitHubRepos>
+    fun searchRepos(@Query("q") query: String): Deferred<GitHubRepoSearchResponse>
 
     companion object {
         val api: GitHubApi = Retrofit.Builder()
