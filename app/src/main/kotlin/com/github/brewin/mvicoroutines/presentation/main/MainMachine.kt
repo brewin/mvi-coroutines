@@ -9,7 +9,7 @@ class MainMachine(
     private val searchReposUseCase: SearchReposUseCase
 ) : MviMachine<MainIntent, MainState>(initialState, MainState::Default) {
 
-    override fun process(intent: MainIntent) = when (intent) {
+    override fun handle(intent: MainIntent) = when (intent) {
         is MainIntent.Search -> searchReposUseCase(intent.query)
         MainIntent.Refresh -> searchReposUseCase(state.query)
     }

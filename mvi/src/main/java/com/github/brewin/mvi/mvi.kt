@@ -44,7 +44,7 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
     init {
         launch {
             _intents.consumeEach {
-                updateProducers.send(process(it))
+                updateProducers.send(handle(it))
             }
         }
         launch {
@@ -59,7 +59,7 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
         }
     }
 
-    protected abstract fun process(intent: I): ReceiveChannel<MviUpdate>
+    protected abstract fun handle(intent: I): ReceiveChannel<MviUpdate>
 
     protected abstract fun reduce(update: MviUpdate): S
 
