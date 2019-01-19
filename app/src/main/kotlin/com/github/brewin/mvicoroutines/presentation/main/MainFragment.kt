@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 class MainFragment : Fragment(), CoroutineScope {
@@ -39,6 +40,7 @@ class MainFragment : Fragment(), CoroutineScope {
     ): View? {
         machine = provideMachine {
             val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.Default()
+            Timber.d(initial.toString())
             val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubApi.api))
             MainMachine(initial, searchUseCase)
         }
@@ -94,7 +96,7 @@ class MainFragment : Fragment(), CoroutineScope {
             repoListAdapter.items = state.repoList
         }
         is MainState.Progressing -> {
-            swipeRefreshLayout.isRefreshing = state.progress
+            swipeRefreshLayout.isRefreshing = state.isProgressing
         }
         is MainState.ErrorReceived -> {
             Snackbar.make(view!!, state.errorMessage, Snackbar.LENGTH_LONG).show()

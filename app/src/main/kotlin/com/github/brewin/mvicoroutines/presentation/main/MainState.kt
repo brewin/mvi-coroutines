@@ -18,14 +18,14 @@ import kotlinx.android.parcel.Parcelize
 sealed class MainState : UiState {
     abstract val query: String
     abstract val repoList: List<RepoEntity>
-    abstract val progress: Boolean
+    abstract val isProgressing: Boolean
     abstract val errorMessage: String
 
     @Parcelize
     data class Default internal constructor(
         override val query: String = "",
         override val repoList: List<RepoEntity> = emptyList(),
-        override val progress: Boolean = false,
+        override val isProgressing: Boolean = false,
         override val errorMessage: String = ""
     ) : MainState() {
         constructor(previousState: MainState) : this(
@@ -38,13 +38,13 @@ sealed class MainState : UiState {
     class Progressing private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val progress: Boolean,
+        override val isProgressing: Boolean,
         override val errorMessage: String
     ) : MainState() {
         constructor(previousState: MainState, isProgressing: Boolean) : this(
             query = previousState.query,
             repoList = previousState.repoList,
-            progress = isProgressing,
+            isProgressing = isProgressing,
             errorMessage = previousState.errorMessage
         )
     }
@@ -53,13 +53,13 @@ sealed class MainState : UiState {
     class ReposReceived private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val progress: Boolean,
+        override val isProgressing: Boolean,
         override val errorMessage: String
     ) : MainState() {
         constructor(previousState: MainState, query: String, repoList: List<RepoEntity>) : this(
             query = query,
             repoList = repoList,
-            progress = false,
+            isProgressing = false,
             errorMessage = previousState.errorMessage
         )
     }
@@ -68,13 +68,13 @@ sealed class MainState : UiState {
     class ErrorReceived private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val progress: Boolean,
+        override val isProgressing: Boolean,
         override val errorMessage: String
     ) : MainState() {
         constructor(previousState: MainState, query: String, errorMessage: String) : this(
             query = query,
             repoList = previousState.repoList,
-            progress = false,
+            isProgressing = false,
             errorMessage = errorMessage
         )
     }

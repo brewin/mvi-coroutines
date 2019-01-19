@@ -6,14 +6,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.CoroutineContext
 
-// or UiEvent, or Action
 interface UiEvent
-
-// or UiState
-interface UiState : Parcelable
-
-// or Change, or Result
 interface Update
+interface UiState : Parcelable
 
 // or StateScope, or StateStore
 abstract class MviMachine<E : UiEvent, S : UiState>(
