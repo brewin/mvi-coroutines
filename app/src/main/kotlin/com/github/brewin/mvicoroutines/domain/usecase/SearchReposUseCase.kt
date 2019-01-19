@@ -1,16 +1,14 @@
 package com.github.brewin.mvicoroutines.domain.usecase
 
-import com.github.brewin.mvi.MviUseCase
+import com.github.brewin.mvi.MviResult
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.produce
 
-class SearchReposUseCase(
-    private val gitHubRepository: GitHubRepository
-) : MviUseCase {
+class SearchReposUseCase(private val gitHubRepository: GitHubRepository) {
 
-    sealed class Result : MviUseCase.Result {
+    sealed class Result : MviResult {
         object Waiting : Result()
         data class Success(val query: String, val searchResults: List<RepoEntity>) : Result()
         data class Failure(val query: String, val errorMessage: String) : Result()
