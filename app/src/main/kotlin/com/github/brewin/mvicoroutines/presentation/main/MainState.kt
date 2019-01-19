@@ -1,6 +1,6 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
-import com.github.brewin.mvi.MviState
+import com.github.brewin.mvi.UiState
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import kotlinx.android.parcel.Parcelize
 
@@ -15,7 +15,7 @@ import kotlinx.android.parcel.Parcelize
  *    which has reducer constructor (S) -> S. The renderer will then receive Default and know not
  *    to show the error message.
  */
-sealed class MainState : MviState {
+sealed class MainState : UiState {
     abstract val query: String
     abstract val repoList: List<RepoEntity>
     abstract val progress: Boolean

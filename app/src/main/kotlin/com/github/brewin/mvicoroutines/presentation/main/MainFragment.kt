@@ -49,7 +49,7 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
         swipeRefreshLayout.setOnRefreshListener {
-            machine.intents.offer(MainIntent.Refresh)
+            machine.intents.offer(MainEvent.RefreshClicked)
         }
         repoListView.adapter = repoListAdapter
         launch {
@@ -66,7 +66,7 @@ class MainFragment : Fragment(), CoroutineScope {
                         object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
                                 if (query != null && query.isNotBlank()) {
-                                    machine.intents.offer(MainIntent.Search(query.trim()))
+                                    machine.intents.offer(MainEvent.SearchSubmitted(query.trim()))
                                 }
                                 hideKeyboard()
                                 return true
@@ -79,7 +79,7 @@ class MainFragment : Fragment(), CoroutineScope {
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        machine.intents.offer(MainIntent.Refresh)
+                        machine.intents.offer(MainEvent.RefreshClicked)
                         true
                     }
                 }

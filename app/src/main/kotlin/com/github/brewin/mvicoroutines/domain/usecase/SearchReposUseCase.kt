@@ -1,6 +1,5 @@
 package com.github.brewin.mvicoroutines.domain.usecase
 
-import com.github.brewin.mvi.MviUpdate
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.coroutines.GlobalScope
@@ -8,7 +7,7 @@ import kotlinx.coroutines.channels.produce
 
 class SearchReposUseCase(private val gitHubRepository: GitHubRepository) {
 
-    sealed class Update : MviUpdate {
+    sealed class Update : com.github.brewin.mvi.Update {
         object Started : Update()
         data class Success(val query: String, val searchResults: List<RepoEntity>) : Update()
         data class Failure(val query: String, val errorMessage: String) : Update()

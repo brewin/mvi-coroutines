@@ -1,20 +1,20 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import com.github.brewin.mvi.MviMachine
-import com.github.brewin.mvi.MviUpdate
+import com.github.brewin.mvi.Update
 import com.github.brewin.mvicoroutines.domain.usecase.SearchReposUseCase
 
 class MainMachine(
     initialState: MainState,
     private val searchReposUseCase: SearchReposUseCase
-) : MviMachine<MainIntent, MainState>(initialState, MainState::Default) {
+) : MviMachine<MainEvent, MainState>(initialState, MainState::Default) {
 
-    override fun handle(intent: MainIntent) = when (intent) {
-        is MainIntent.Search -> searchReposUseCase(intent.query)
-        MainIntent.Refresh -> searchReposUseCase(state.query)
+    override fun handle(event: MainEvent) = when (event) {
+        is MainEvent.SearchSubmitted -> searchReposUseCase(event.query)
+        MainEvent.RefreshClicked -> searchReposUseCase(state.query)
     }
 
-    override fun reduce(update: MviUpdate) = when (update) {
+    override fun reduce(update: Update) = when (update) {
         is SearchReposUseCase.Update -> when (update) {
             is SearchReposUseCase.Update.Started ->
                 MainState.Progressing(state, true)

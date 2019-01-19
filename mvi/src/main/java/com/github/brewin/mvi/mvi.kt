@@ -7,16 +7,16 @@ import kotlinx.coroutines.channels.*
 import kotlin.coroutines.CoroutineContext
 
 // or UiEvent, or Action
-interface MviIntent
+interface UiEvent
 
 // or UiState
-interface MviState : Parcelable
+interface UiState : Parcelable
 
 // or Change, or Result
-interface MviUpdate
+interface Update
 
 // or StateScope, or StateStore
-abstract class MviMachine<I : MviIntent, S : MviState>(
+abstract class MviMachine<E : UiEvent, S : UiState>(
     initialState: S,
     private val defaultStateConstructor: (S) -> S
 ) : ViewModel(), CoroutineScope {
@@ -27,10 +27,10 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
     val state get() = _state
     val stateAsDefault get() = defaultStateConstructor(_state)
 
-    private val _intents = Channel<I>(Channel.CONFLATED)
-    val intents: SendChannel<I> get() = _intents
+    private val _events = Channel<E>(Channel.CONFLATED)
+    val intents: SendChannel<E> get() = _events
 
-    private val updateProducers = Channel<ReceiveChannel<MviUpdate>>(Channel.UNLIMITED)
+    private val updateProducers = Channel<ReceiveChannel<Update>>(Channel.UNLIMITED)
 
     /*
      * Normally a ConflatedBroadcastChannel would be used for state changes, but since the renderer
@@ -43,7 +43,7 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
 
     init {
         launch {
-            _intents.consumeEach {
+            _events.consumeEach {
                 updateProducers.send(handle(it))
             }
         }
@@ -59,9 +59,9 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
         }
     }
 
-    protected abstract fun handle(intent: I): ReceiveChannel<MviUpdate>
+    protected abstract fun handle(event: E): ReceiveChannel<Update>
 
-    protected abstract fun reduce(update: MviUpdate): S
+    protected abstract fun reduce(update: Update): S
 
     override fun onCleared() {
         super.onCleared()
