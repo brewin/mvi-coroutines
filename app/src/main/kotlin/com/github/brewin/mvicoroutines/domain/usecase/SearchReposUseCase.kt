@@ -1,6 +1,6 @@
 package com.github.brewin.mvicoroutines.domain.usecase
 
-import com.github.brewin.mvi.MviResult
+import com.github.brewin.mvi.MviUpdate
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.coroutines.GlobalScope
@@ -8,23 +8,23 @@ import kotlinx.coroutines.channels.produce
 
 class SearchReposUseCase(private val gitHubRepository: GitHubRepository) {
 
-    sealed class Result : MviResult {
-        object Waiting : Result()
-        data class Success(val query: String, val searchResults: List<RepoEntity>) : Result()
-        data class Failure(val query: String, val errorMessage: String) : Result()
-        object Finally : Result()
+    sealed class Update : MviUpdate {
+        object Started : Update()
+        data class Success(val query: String, val searchResults: List<RepoEntity>) : Update()
+        data class Failure(val query: String, val errorMessage: String) : Update()
+        object Finally : Update()
     }
 
     // FIXME: GlobalScope okay here? Could pass in a scope.
     operator fun invoke(query: String) = GlobalScope.produce {
-        send(Result.Waiting)
+        send(Update.Started)
         try {
             val searchResults = gitHubRepository.searchRepos(query)
-            send(Result.Success(query, searchResults))
+            send(Update.Success(query, searchResults))
         } catch (e: Exception) {
-            send(Result.Failure(query, e.message ?: "Unknown error"))
+            send(Update.Failure(query, e.message ?: "Unknown error"))
         } finally {
-            send(Result.Finally)
+            send(Update.Finally)
         }
     }
 }

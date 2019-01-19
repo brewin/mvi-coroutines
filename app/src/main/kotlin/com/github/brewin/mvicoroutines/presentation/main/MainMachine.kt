@@ -1,7 +1,7 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import com.github.brewin.mvi.MviMachine
-import com.github.brewin.mvi.MviResult
+import com.github.brewin.mvi.MviUpdate
 import com.github.brewin.mvicoroutines.domain.usecase.SearchReposUseCase
 
 class MainMachine(
@@ -14,17 +14,17 @@ class MainMachine(
         MainIntent.Refresh -> searchReposUseCase(state.query)
     }
 
-    override fun reduce(result: MviResult) = when (result) {
-        is SearchReposUseCase.Result -> when (result) {
-            is SearchReposUseCase.Result.Waiting ->
+    override fun reduce(update: MviUpdate) = when (update) {
+        is SearchReposUseCase.Update -> when (update) {
+            is SearchReposUseCase.Update.Started ->
                 MainState.Progressing(state, true)
-            is SearchReposUseCase.Result.Success ->
-                MainState.ReposReceived(state, result.query, result.searchResults)
-            is SearchReposUseCase.Result.Failure ->
-                MainState.ErrorReceived(state, result.query, result.errorMessage)
-            SearchReposUseCase.Result.Finally ->
+            is SearchReposUseCase.Update.Success ->
+                MainState.ReposReceived(state, update.query, update.searchResults)
+            is SearchReposUseCase.Update.Failure ->
+                MainState.ErrorReceived(state, update.query, update.errorMessage)
+            SearchReposUseCase.Update.Finally ->
                 MainState.Progressing(state, false)
         }
-        else -> throw IllegalStateException("Illegal Result: $result")
+        else -> throw IllegalStateException("Illegal Update: $update")
     }
 }

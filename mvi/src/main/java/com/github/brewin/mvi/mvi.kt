@@ -12,8 +12,8 @@ interface MviIntent
 // or UiState
 interface MviState : Parcelable
 
-// or Change
-interface MviResult
+// or Change, or Result
+interface MviUpdate
 
 // or StateScope, or StateStore
 abstract class MviMachine<I : MviIntent, S : MviState>(
@@ -30,7 +30,7 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
     private val _intents = Channel<I>(Channel.CONFLATED)
     val intents: SendChannel<I> get() = _intents
 
-    private val useCases = Channel<ReceiveChannel<MviResult>>(Channel.UNLIMITED)
+    private val updateProducers = Channel<ReceiveChannel<MviUpdate>>(Channel.UNLIMITED)
 
     /*
      * Normally a ConflatedBroadcastChannel would be used for state changes, but since the renderer
@@ -44,13 +44,13 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
     init {
         launch {
             _intents.consumeEach {
-                useCases.send(process(it))
+                updateProducers.send(process(it))
             }
         }
         launch {
-            useCases.consumeEach { results ->
+            updateProducers.consumeEach { updates ->
                 launch {
-                    results.consumeEach {
+                    updates.consumeEach {
                         _state = reduce(it)
                         _states.send(_state)
                     }
@@ -59,9 +59,9 @@ abstract class MviMachine<I : MviIntent, S : MviState>(
         }
     }
 
-    protected abstract fun process(intent: I): ReceiveChannel<MviResult>
+    protected abstract fun process(intent: I): ReceiveChannel<MviUpdate>
 
-    protected abstract fun reduce(result: MviResult): S
+    protected abstract fun reduce(update: MviUpdate): S
 
     override fun onCleared() {
         super.onCleared()
