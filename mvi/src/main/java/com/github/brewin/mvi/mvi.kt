@@ -7,11 +7,10 @@ import kotlinx.coroutines.channels.*
 import kotlin.coroutines.CoroutineContext
 
 interface UiEvent
-interface Update
+interface UseCaseUpdate
 interface UiState : Parcelable
 
-// or StateScope, or StateStore
-abstract class MviMachine<E : UiEvent, S : UiState>(
+abstract class Machine<E : UiEvent, S : UiState>(
     initialState: S,
     private val defaultStateConstructor: (S) -> S
 ) : ViewModel(), CoroutineScope {
@@ -23,9 +22,9 @@ abstract class MviMachine<E : UiEvent, S : UiState>(
     val stateAsDefault get() = defaultStateConstructor(_state)
 
     private val _events = Channel<E>(Channel.CONFLATED)
-    val intents: SendChannel<E> get() = _events
+    val events: SendChannel<E> get() = _events
 
-    private val updateProducers = Channel<ReceiveChannel<Update>>(Channel.UNLIMITED)
+    private val useCases = Channel<ReceiveChannel<UseCaseUpdate>>(Channel.UNLIMITED)
 
     /*
      * Normally a ConflatedBroadcastChannel would be used for state changes, but since the renderer
@@ -39,14 +38,14 @@ abstract class MviMachine<E : UiEvent, S : UiState>(
     init {
         launch {
             _events.consumeEach {
-                updateProducers.send(handle(it))
+                useCases.send(handleEvent(it))
             }
         }
         launch {
-            updateProducers.consumeEach { updates ->
+            useCases.consumeEach { updates ->
                 launch {
                     updates.consumeEach {
-                        _state = reduce(it)
+                        _state = updateState(it)
                         _states.send(_state)
                     }
                 }
@@ -54,9 +53,9 @@ abstract class MviMachine<E : UiEvent, S : UiState>(
         }
     }
 
-    protected abstract fun handle(event: E): ReceiveChannel<Update>
+    protected abstract fun handleEvent(event: E): ReceiveChannel<UseCaseUpdate>
 
-    protected abstract fun reduce(update: Update): S
+    protected abstract fun updateState(update: UseCaseUpdate): S
 
     override fun onCleared() {
         super.onCleared()

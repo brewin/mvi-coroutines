@@ -15,11 +15,10 @@ import com.github.brewin.mvicoroutines.presentation.common.GenericListAdapter
 import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
 import hideKeyboard
-import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.android.synthetic.main.main_fragment.*
+import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
-import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 class MainFragment : Fragment(), CoroutineScope {
@@ -40,7 +39,6 @@ class MainFragment : Fragment(), CoroutineScope {
     ): View? {
         machine = provideMachine {
             val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.Default()
-            Timber.d(initial.toString())
             val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubApi.api))
             MainMachine(initial, searchUseCase)
         }
@@ -51,7 +49,7 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
         swipeRefreshLayout.setOnRefreshListener {
-            machine.intents.offer(MainEvent.RefreshClicked)
+            machine.events.offer(MainEvent.RefreshClicked)
         }
         repoListView.adapter = repoListAdapter
         launch {
@@ -68,7 +66,7 @@ class MainFragment : Fragment(), CoroutineScope {
                         object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
                                 if (query != null && query.isNotBlank()) {
-                                    machine.intents.offer(MainEvent.SearchSubmitted(query.trim()))
+                                    machine.events.offer(MainEvent.SearchSubmitted(query.trim()))
                                 }
                                 hideKeyboard()
                                 return true
@@ -81,7 +79,7 @@ class MainFragment : Fragment(), CoroutineScope {
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        machine.intents.offer(MainEvent.RefreshClicked)
+                        machine.events.offer(MainEvent.RefreshClicked)
                         true
                     }
                 }
@@ -90,16 +88,18 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    private fun render(state: MainState) = when (state) {
-        is MainState.Default,
-        is MainState.ReposReceived -> {
-            repoListAdapter.items = state.repoList
-        }
-        is MainState.Progressing -> {
-            swipeRefreshLayout.isRefreshing = state.isProgressing
-        }
-        is MainState.ErrorReceived -> {
-            Snackbar.make(view!!, state.errorMessage, Snackbar.LENGTH_LONG).show()
+    private fun render(state: MainState) {
+        swipeRefreshLayout.isRefreshing = state.isInProgress
+        when (state) {
+            is MainState.Default,
+            is MainState.ReposReceived -> {
+                repoListAdapter.items = state.repoList
+            }
+            is MainState.InProgress -> {
+            }
+            is MainState.ErrorReceived -> {
+                Snackbar.make(view!!, state.errorMessage, Snackbar.LENGTH_LONG).show()
+            }
         }
     }
 

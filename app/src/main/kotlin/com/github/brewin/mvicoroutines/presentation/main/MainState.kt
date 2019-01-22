@@ -11,21 +11,21 @@ import kotlinx.android.parcel.Parcelize
  * 2. The renderer will know exactly which views need to be updated and which don't.
  * 3. The renderer will know when a value is not null, so fewer null checks.
  * 4. It solves the problem of transient information (ie. error message Snackbar) repeating on
- *    configuration changes. The MviMachine transforms the last state into its Default type,
+ *    configuration changes. The Machine transforms the last state into its Default type,
  *    which has reducer constructor (S) -> S. The renderer will then receive Default and know not
  *    to show the error message.
  */
 sealed class MainState : UiState {
     abstract val query: String
     abstract val repoList: List<RepoEntity>
-    abstract val isProgressing: Boolean
+    abstract val isInProgress: Boolean
     abstract val errorMessage: String
 
     @Parcelize
     data class Default internal constructor(
         override val query: String = "",
         override val repoList: List<RepoEntity> = emptyList(),
-        override val isProgressing: Boolean = false,
+        override val isInProgress: Boolean = false,
         override val errorMessage: String = ""
     ) : MainState() {
         constructor(previousState: MainState) : this(
@@ -35,16 +35,16 @@ sealed class MainState : UiState {
     }
 
     @Parcelize
-    class Progressing private constructor(
+    class InProgress private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val isProgressing: Boolean,
+        override val isInProgress: Boolean,
         override val errorMessage: String
     ) : MainState() {
-        constructor(previousState: MainState, isProgressing: Boolean) : this(
+        constructor(previousState: MainState) : this(
             query = previousState.query,
             repoList = previousState.repoList,
-            isProgressing = isProgressing,
+            isInProgress = true,
             errorMessage = previousState.errorMessage
         )
     }
@@ -53,13 +53,13 @@ sealed class MainState : UiState {
     class ReposReceived private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val isProgressing: Boolean,
+        override val isInProgress: Boolean,
         override val errorMessage: String
     ) : MainState() {
         constructor(previousState: MainState, query: String, repoList: List<RepoEntity>) : this(
             query = query,
             repoList = repoList,
-            isProgressing = false,
+            isInProgress = false,
             errorMessage = previousState.errorMessage
         )
     }
@@ -68,13 +68,13 @@ sealed class MainState : UiState {
     class ErrorReceived private constructor(
         override val query: String,
         override val repoList: List<RepoEntity>,
-        override val isProgressing: Boolean,
+        override val isInProgress: Boolean,
         override val errorMessage: String
     ) : MainState() {
         constructor(previousState: MainState, query: String, errorMessage: String) : this(
             query = query,
             repoList = previousState.repoList,
-            isProgressing = false,
+            isInProgress = false,
             errorMessage = errorMessage
         )
     }
