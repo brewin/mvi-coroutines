@@ -1,28 +1,80 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
+import android.os.Parcelable
 import com.github.brewin.mvi.Machine
-import com.github.brewin.mvi.UseCaseUpdate
-import com.github.brewin.mvicoroutines.domain.usecase.SearchReposUseCase
+import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
+import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
+import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.channels.produce
+import timber.log.Timber
 
 class MainMachine(
-    initialState: MainState,
-    private val searchReposUseCase: SearchReposUseCase
-) : Machine<MainEvent, MainState>(initialState, MainState::Default) {
+    initialState: State,
+    val gitHubRepository: GitHubRepository
+) : Machine<MainMachine.Event, MainMachine.Update, MainMachine.State>(initialState) {
 
-    override fun handleEvent(event: MainEvent) = when (event) {
-        is MainEvent.SearchSubmitted -> searchReposUseCase(event.query)
-        MainEvent.RefreshClicked -> searchReposUseCase(state.query)
+    sealed class Event : Machine.Event {
+        data class SearchSubmitted(val query: String) : Event()
+        object RefreshClicked : Event()
+        object ErrorMessageShown : Event()
     }
 
-    override fun updateState(update: UseCaseUpdate) = when (update) {
-        is SearchReposUseCase.Update -> when (update) {
-            is SearchReposUseCase.Update.Started ->
-                MainState.InProgress(state)
-            is SearchReposUseCase.Update.Success ->
-                MainState.ReposReceived(state, update.query, update.searchResults)
-            is SearchReposUseCase.Update.Failure ->
-                MainState.ErrorReceived(state, update.query, update.errorMessage)
-        }
-        else -> throw IllegalStateException("Illegal Update: $update")
+    sealed class Update : Machine.Update {
+        data class Progress(val isInProgress: Boolean) : Update()
+        data class Results(val query: String, val searchResults: List<RepoEntity>) : Update()
+        data class Error(val query: String, val errorMessage: String) : Update()
+        object HideError : Update()
     }
+
+    @Parcelize
+    data class State(
+        val query: String = "",
+        val searchResults: List<RepoEntity> = emptyList(),
+        val isInProgress: Boolean = false,
+        val errorMessage: String = "",
+        val shouldShowError: Boolean = false
+    ) : Machine.State, Parcelable
+
+    override fun handleEvent(event: Event) = when (event) {
+        is Event.SearchSubmitted -> searchRepos(event.query)
+        Event.RefreshClicked -> searchRepos(state.query)
+        Event.ErrorMessageShown -> hideErrorMessage()
+    }
+
+    override fun updateState(update: Update) = when (update) {
+        is Update.Progress -> state.copy(
+            isInProgress = update.isInProgress
+        )
+        is Update.Results -> state.copy(
+            query = update.query,
+            searchResults = update.searchResults
+        )
+        is Update.Error -> state.copy(
+            query = update.query,
+            errorMessage = update.errorMessage,
+            shouldShowError = true
+        )
+        Update.HideError -> state.copy(
+            shouldShowError = false
+        )
+    }
+}
+
+/* State updater producers (ie. use cases) */
+
+fun MainMachine.searchRepos(query: String) = produce {
+    send(MainMachine.Update.Progress(true))
+    try {
+        val searchResults = gitHubRepository.searchRepos(query)
+        send(MainMachine.Update.Results(query, searchResults))
+    } catch (e: Exception) {
+        Timber.e(e)
+        send(MainMachine.Update.Error(query, e.message ?: "Unknown error"))
+    } finally {
+        send(MainMachine.Update.Progress(false))
+    }
+}
+
+fun MainMachine.hideErrorMessage() = produce {
+    send(MainMachine.Update.HideError)
 }

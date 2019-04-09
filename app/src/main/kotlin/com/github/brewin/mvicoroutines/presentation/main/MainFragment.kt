@@ -10,7 +10,6 @@ import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.remote.GitHubDataSource
 import com.github.brewin.mvicoroutines.data.repository.GitHubRepositoryImpl
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
-import com.github.brewin.mvicoroutines.domain.usecase.SearchReposUseCase
 import com.github.brewin.mvicoroutines.presentation.common.GenericListAdapter
 import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
@@ -19,7 +18,6 @@ import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
-import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 class MainFragment : Fragment(), CoroutineScope {
@@ -39,9 +37,9 @@ class MainFragment : Fragment(), CoroutineScope {
         savedInstanceState: Bundle?
     ): View? {
         machine = provideMachine {
-            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.Default()
-            val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubDataSource()))
-            MainMachine(initial, searchUseCase)
+            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainMachine.State()
+            val gitHubRepository = GitHubRepositoryImpl(GitHubDataSource())
+            MainMachine(initial, gitHubRepository)
         }
         return inflater.inflate(R.layout.main_fragment, container, false)
     }
@@ -50,7 +48,7 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
         swipeRefreshLayout.setOnRefreshListener {
-            machine.events.offer(MainEvent.RefreshClicked)
+            machine.events.offer(MainMachine.Event.RefreshClicked)
         }
         repoListView.adapter = repoListAdapter
         launch {
@@ -67,7 +65,9 @@ class MainFragment : Fragment(), CoroutineScope {
                         object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
                                 if (query != null && query.isNotBlank()) {
-                                    machine.events.offer(MainEvent.SearchSubmitted(query.trim()))
+                                    machine.events.offer(
+                                        MainMachine.Event.SearchSubmitted(query.trim())
+                                    )
                                 }
                                 hideKeyboard()
                                 return true
@@ -80,7 +80,7 @@ class MainFragment : Fragment(), CoroutineScope {
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        machine.events.offer(MainEvent.RefreshClicked)
+                        machine.events.offer(MainMachine.Event.RefreshClicked)
                         true
                     }
                 }
@@ -89,23 +89,24 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    private fun render(state: MainState) {
-        swipeRefreshLayout.isRefreshing = state.isInProgress
-        when (state) {
-            is MainState.Default,
-            is MainState.ReposReceived -> {
-                repoListAdapter.items = state.repoList
-            }
-            is MainState.InProgress -> {
-            }
-            is MainState.ErrorReceived -> {
-                Snackbar.make(view!!, state.errorMessage, Snackbar.LENGTH_LONG).show()
-            }
-        }
+    private fun showErrorMessage(message: String) {
+        Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+            .addCallback(object : Snackbar.Callback() {
+                override fun onShown(sb: Snackbar?) {
+                    machine.events.offer(MainMachine.Event.ErrorMessageShown)
+
+                }
+            }).show()
+    }
+
+    private fun render(state: MainMachine.State) = state.run {
+        if (shouldShowError) showErrorMessage(errorMessage)
+        swipeRefreshLayout.isRefreshing = isInProgress
+        repoListAdapter.items = searchResults
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(SAVED_STATE_KEY, machine.stateAsDefault)
+        outState.putParcelable(SAVED_STATE_KEY, machine.state)
         super.onSaveInstanceState(outState)
     }
 
