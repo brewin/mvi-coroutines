@@ -5,6 +5,7 @@ import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.produce
+import timber.log.Timber
 
 class SearchReposUseCase(private val gitHubRepository: GitHubRepository) {
 
@@ -21,6 +22,7 @@ class SearchReposUseCase(private val gitHubRepository: GitHubRepository) {
             val searchResults = gitHubRepository.searchRepos(query)
             send(Update.Success(query, searchResults))
         } catch (e: Exception) {
+            Timber.e(e)
             send(Update.Failure(query, e.message ?: "Unknown error"))
         }
     }

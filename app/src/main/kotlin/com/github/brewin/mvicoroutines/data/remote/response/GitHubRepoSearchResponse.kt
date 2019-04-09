@@ -1,216 +1,321 @@
 package com.github.brewin.mvicoroutines.data.remote.response
 
-import androidx.core.net.toUri
-import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
-import com.squareup.moshi.Json
+import kotlinx.serialization.Optional
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class GitHubRepoSearchResponse(
-    @Json(name = "total_count")
-    val totalCount: Int? = null,
-    @Json(name = "incomplete_results")
+    @Optional
+    @SerialName("incomplete_results")
     val incompleteResults: Boolean? = null,
-    @Json(name = "items")
-    val items: List<Item>? = null
+    @Optional
+    @SerialName("items")
+    val items: List<Item?>? = null,
+    @Optional
+    @SerialName("total_count")
+    val totalCount: Int? = null
 ) {
-
+    @Serializable
     data class Item(
-        @Json(name = "id")
-        val id: Int? = null,
-        @Json(name = "name")
-        val name: String? = null,
-        @Json(name = "full_name")
-        val fullName: String? = null,
-        @Json(name = "owner")
-        val owner: Owner? = null,
-        @Json(name = "private")
-        val _private: Boolean? = null,
-        @Json(name = "html_url")
-        val htmlUrl: String? = null,
-        @Json(name = "description")
-        val description: String? = null,
-        @Json(name = "fork")
-        val fork: Boolean? = null,
-        @Json(name = "url")
-        val url: String? = null,
-        @Json(name = "forks_url")
-        val forksUrl: String? = null,
-        @Json(name = "keys_url")
-        val keysUrl: String? = null,
-        @Json(name = "collaborators_url")
-        val collaboratorsUrl: String? = null,
-        @Json(name = "teams_url")
-        val teamsUrl: String? = null,
-        @Json(name = "hooks_url")
-        val hooksUrl: String? = null,
-        @Json(name = "issue_events_url")
-        val issueEventsUrl: String? = null,
-        @Json(name = "events_url")
-        val eventsUrl: String? = null,
-        @Json(name = "assignees_url")
-        val assigneesUrl: String? = null,
-        @Json(name = "branches_url")
-        val branchesUrl: String? = null,
-        @Json(name = "tags_url")
-        val tagsUrl: String? = null,
-        @Json(name = "blobs_url")
-        val blobsUrl: String? = null,
-        @Json(name = "git_tags_url")
-        val gitTagsUrl: String? = null,
-        @Json(name = "git_refs_url")
-        val gitRefsUrl: String? = null,
-        @Json(name = "trees_url")
-        val treesUrl: String? = null,
-        @Json(name = "statuses_url")
-        val statusesUrl: String? = null,
-        @Json(name = "languages_url")
-        val languagesUrl: String? = null,
-        @Json(name = "stargazers_url")
-        val stargazersUrl: String? = null,
-        @Json(name = "contributors_url")
-        val contributorsUrl: String? = null,
-        @Json(name = "subscribers_url")
-        val subscribersUrl: String? = null,
-        @Json(name = "subscription_url")
-        val subscriptionUrl: String? = null,
-        @Json(name = "commits_url")
-        val commitsUrl: String? = null,
-        @Json(name = "git_commits_url")
-        val gitCommitsUrl: String? = null,
-        @Json(name = "comments_url")
-        val commentsUrl: String? = null,
-        @Json(name = "issue_comment_url")
-        val issueCommentUrl: String? = null,
-        @Json(name = "contents_url")
-        val contentsUrl: String? = null,
-        @Json(name = "compare_url")
-        val compareUrl: String? = null,
-        @Json(name = "merges_url")
-        val mergesUrl: String? = null,
-        @Json(name = "archive_url")
+        @Optional
+        @SerialName("archive_url")
         val archiveUrl: String? = null,
-        @Json(name = "downloads_url")
-        val downloadsUrl: String? = null,
-        @Json(name = "issues_url")
-        val issuesUrl: String? = null,
-        @Json(name = "pulls_url")
-        val pullsUrl: String? = null,
-        @Json(name = "milestones_url")
-        val milestonesUrl: String? = null,
-        @Json(name = "notifications_url")
-        val notificationsUrl: String? = null,
-        @Json(name = "labels_url")
-        val labelsUrl: String? = null,
-        @Json(name = "releases_url")
-        val releasesUrl: String? = null,
-        @Json(name = "deployments_url")
-        val deploymentsUrl: String? = null,
-        @Json(name = "created_at")
-        val createdAt: String? = null,
-        @Json(name = "updated_at")
-        val updatedAt: String? = null,
-        @Json(name = "pushed_at")
-        val pushedAt: String? = null,
-        @Json(name = "git_url")
-        val gitUrl: String? = null,
-        @Json(name = "ssh_url")
-        val sshUrl: String? = null,
-        @Json(name = "clone_url")
-        val cloneUrl: String? = null,
-        @Json(name = "svn_url")
-        val svnUrl: String? = null,
-        @Json(name = "homepage")
-        val homepage: String? = null,
-        @Json(name = "size")
-        val size: Int? = null,
-        @Json(name = "stargazers_count")
-        val stargazersCount: Int? = null,
-        @Json(name = "watchers_count")
-        val watchersCount: Int? = null,
-        @Json(name = "language")
-        val language: String? = null,
-        @Json(name = "has_issues")
-        val hasIssues: Boolean? = null,
-        @Json(name = "has_projects")
-        val hasProjects: Boolean? = null,
-        @Json(name = "has_downloads")
-        val hasDownloads: Boolean? = null,
-        @Json(name = "has_wiki")
-        val hasWiki: Boolean? = null,
-        @Json(name = "has_pages")
-        val hasPages: Boolean? = null,
-        @Json(name = "forks_count")
-        val forksCount: Int? = null,
-        @Json(name = "mirror_url")
-        val mirrorUrl: Any? = null,
-        @Json(name = "archived")
+        @Optional
+        @SerialName("archived")
         val archived: Boolean? = null,
-        @Json(name = "open_issues_count")
-        val openIssuesCount: Int? = null,
-        @Json(name = "license")
-        val license: License? = null,
-        @Json(name = "forks")
-        val forks: Int? = null,
-        @Json(name = "open_issues")
-        val openIssues: Int? = null,
-        @Json(name = "watchers")
-        val watchers: Int? = null,
-        @Json(name = "default_branch")
+        @Optional
+        @SerialName("assignees_url")
+        val assigneesUrl: String? = null,
+        @Optional
+        @SerialName("blobs_url")
+        val blobsUrl: String? = null,
+        @Optional
+        @SerialName("branches_url")
+        val branchesUrl: String? = null,
+        @Optional
+        @SerialName("clone_url")
+        val cloneUrl: String? = null,
+        @Optional
+        @SerialName("collaborators_url")
+        val collaboratorsUrl: String? = null,
+        @Optional
+        @SerialName("comments_url")
+        val commentsUrl: String? = null,
+        @Optional
+        @SerialName("commits_url")
+        val commitsUrl: String? = null,
+        @Optional
+        @SerialName("compare_url")
+        val compareUrl: String? = null,
+        @Optional
+        @SerialName("contents_url")
+        val contentsUrl: String? = null,
+        @Optional
+        @SerialName("contributors_url")
+        val contributorsUrl: String? = null,
+        @Optional
+        @SerialName("created_at")
+        val createdAt: String? = null,
+        @Optional
+        @SerialName("default_branch")
         val defaultBranch: String? = null,
-        @Json(name = "score")
-        val score: Float? = null
+        @Optional
+        @SerialName("deployments_url")
+        val deploymentsUrl: String? = null,
+        @Optional
+        @SerialName("description")
+        val description: String? = null,
+        @Optional
+        @SerialName("disabled")
+        val disabled: Boolean? = null,
+        @Optional
+        @SerialName("downloads_url")
+        val downloadsUrl: String? = null,
+        @Optional
+        @SerialName("events_url")
+        val eventsUrl: String? = null,
+        @Optional
+        @SerialName("fork")
+        val fork: Boolean? = null,
+        @Optional
+        @SerialName("forks")
+        val forks: Int? = null,
+        @Optional
+        @SerialName("forks_count")
+        val forksCount: Int? = null,
+        @Optional
+        @SerialName("forks_url")
+        val forksUrl: String? = null,
+        @Optional
+        @SerialName("full_name")
+        val fullName: String? = null,
+        @Optional
+        @SerialName("git_commits_url")
+        val gitCommitsUrl: String? = null,
+        @Optional
+        @SerialName("git_refs_url")
+        val gitRefsUrl: String? = null,
+        @Optional
+        @SerialName("git_tags_url")
+        val gitTagsUrl: String? = null,
+        @Optional
+        @SerialName("git_url")
+        val gitUrl: String? = null,
+        @Optional
+        @SerialName("has_downloads")
+        val hasDownloads: Boolean? = null,
+        @Optional
+        @SerialName("has_issues")
+        val hasIssues: Boolean? = null,
+        @Optional
+        @SerialName("has_pages")
+        val hasPages: Boolean? = null,
+        @Optional
+        @SerialName("has_projects")
+        val hasProjects: Boolean? = null,
+        @Optional
+        @SerialName("has_wiki")
+        val hasWiki: Boolean? = null,
+        @Optional
+        @SerialName("homepage")
+        val homepage: String? = null,
+        @Optional
+        @SerialName("hooks_url")
+        val hooksUrl: String? = null,
+        @Optional
+        @SerialName("html_url")
+        val htmlUrl: String? = null,
+        @Optional
+        @SerialName("id")
+        val id: Int? = null,
+        @Optional
+        @SerialName("issue_comment_url")
+        val issueCommentUrl: String? = null,
+        @Optional
+        @SerialName("issue_events_url")
+        val issueEventsUrl: String? = null,
+        @Optional
+        @SerialName("issues_url")
+        val issuesUrl: String? = null,
+        @Optional
+        @SerialName("keys_url")
+        val keysUrl: String? = null,
+        @Optional
+        @SerialName("labels_url")
+        val labelsUrl: String? = null,
+        @Optional
+        @SerialName("language")
+        val language: String? = null,
+        @Optional
+        @SerialName("languages_url")
+        val languagesUrl: String? = null,
+        @Optional
+        @SerialName("license")
+        val license: License? = null,
+        @Optional
+        @SerialName("merges_url")
+        val mergesUrl: String? = null,
+        @Optional
+        @SerialName("milestones_url")
+        val milestonesUrl: String? = null,
+        @Optional
+        @SerialName("mirror_url")
+        val mirrorUrl: String? = null,
+        @Optional
+        @SerialName("name")
+        val name: String? = null,
+        @Optional
+        @SerialName("node_id")
+        val nodeId: String? = null,
+        @Optional
+        @SerialName("notifications_url")
+        val notificationsUrl: String? = null,
+        @Optional
+        @SerialName("open_issues")
+        val openIssues: Int? = null,
+        @Optional
+        @SerialName("open_issues_count")
+        val openIssuesCount: Int? = null,
+        @Optional
+        @SerialName("owner")
+        val owner: Owner? = null,
+        @Optional
+        @SerialName("private")
+        val `private`: Boolean? = null,
+        @Optional
+        @SerialName("pulls_url")
+        val pullsUrl: String? = null,
+        @Optional
+        @SerialName("pushed_at")
+        val pushedAt: String? = null,
+        @Optional
+        @SerialName("releases_url")
+        val releasesUrl: String? = null,
+        @Optional
+        @SerialName("score")
+        val score: Double? = null,
+        @Optional
+        @SerialName("size")
+        val size: Int? = null,
+        @Optional
+        @SerialName("ssh_url")
+        val sshUrl: String? = null,
+        @Optional
+        @SerialName("stargazers_count")
+        val stargazersCount: Int? = null,
+        @Optional
+        @SerialName("stargazers_url")
+        val stargazersUrl: String? = null,
+        @Optional
+        @SerialName("statuses_url")
+        val statusesUrl: String? = null,
+        @Optional
+        @SerialName("subscribers_url")
+        val subscribersUrl: String? = null,
+        @Optional
+        @SerialName("subscription_url")
+        val subscriptionUrl: String? = null,
+        @Optional
+        @SerialName("svn_url")
+        val svnUrl: String? = null,
+        @Optional
+        @SerialName("tags_url")
+        val tagsUrl: String? = null,
+        @Optional
+        @SerialName("teams_url")
+        val teamsUrl: String? = null,
+        @Optional
+        @SerialName("trees_url")
+        val treesUrl: String? = null,
+        @Optional
+        @SerialName("updated_at")
+        val updatedAt: String? = null,
+        @Optional
+        @SerialName("url")
+        val url: String? = null,
+        @Optional
+        @SerialName("watchers")
+        val watchers: Int? = null,
+        @Optional
+        @SerialName("watchers_count")
+        val watchersCount: Int? = null
     ) {
-
+        @Serializable
         data class Owner(
-            @Json(name = "login")
-            val login: String? = null,
-            @Json(name = "id")
-            val id: Int? = null,
-            @Json(name = "avatar_url")
+            @Optional
+            @SerialName("avatar_url")
             val avatarUrl: String? = null,
-            @Json(name = "gravatar_id")
-            val gravatarId: String? = null,
-            @Json(name = "url")
-            val url: String? = null,
-            @Json(name = "html_url")
-            val htmlUrl: String? = null,
-            @Json(name = "followers_url")
-            val followersUrl: String? = null,
-            @Json(name = "following_url")
-            val followingUrl: String? = null,
-            @Json(name = "gists_url")
-            val gistsUrl: String? = null,
-            @Json(name = "starred_url")
-            val starredUrl: String? = null,
-            @Json(name = "subscriptions_url")
-            val subscriptionsUrl: String? = null,
-            @Json(name = "organizations_url")
-            val organizationsUrl: String? = null,
-            @Json(name = "repos_url")
-            val reposUrl: String? = null,
-            @Json(name = "events_url")
+            @Optional
+            @SerialName("events_url")
             val eventsUrl: String? = null,
-            @Json(name = "received_events_url")
+            @Optional
+            @SerialName("followers_url")
+            val followersUrl: String? = null,
+            @Optional
+            @SerialName("following_url")
+            val followingUrl: String? = null,
+            @Optional
+            @SerialName("gists_url")
+            val gistsUrl: String? = null,
+            @Optional
+            @SerialName("gravatar_id")
+            val gravatarId: String? = null,
+            @Optional
+            @SerialName("html_url")
+            val htmlUrl: String? = null,
+            @Optional
+            @SerialName("id")
+            val id: Int? = null,
+            @Optional
+            @SerialName("login")
+            val login: String? = null,
+            @Optional
+            @SerialName("node_id")
+            val nodeId: String? = null,
+            @Optional
+            @SerialName("organizations_url")
+            val organizationsUrl: String? = null,
+            @Optional
+            @SerialName("received_events_url")
             val receivedEventsUrl: String? = null,
-            @Json(name = "type")
+            @Optional
+            @SerialName("repos_url")
+            val reposUrl: String? = null,
+            @Optional
+            @SerialName("site_admin")
+            val siteAdmin: Boolean? = null,
+            @Optional
+            @SerialName("starred_url")
+            val starredUrl: String? = null,
+            @Optional
+            @SerialName("subscriptions_url")
+            val subscriptionsUrl: String? = null,
+            @Optional
+            @SerialName("type")
             val type: String? = null,
-            @Json(name = "site_admin")
-            val siteAdmin: Boolean? = null
+            @Optional
+            @SerialName("url")
+            val url: String? = null
         )
 
+        @Serializable
         data class License(
-            @Json(name = "key")
+            @Optional
+            @SerialName("key")
             val key: String? = null,
-            @Json(name = "name")
+            @Optional
+            @SerialName("name")
             val name: String? = null,
-            @Json(name = "spdx_id")
+            @Optional
+            @SerialName("node_id")
+            val nodeId: String? = null,
+            @Optional
+            @SerialName("spdx_id")
             val spdxId: String? = null,
-            @Json(name = "url")
+            @Optional
+            @SerialName("url")
             val url: String? = null
         )
     }
-
-    val asRepoEntityList: List<RepoEntity>
-        get() = items.orEmpty()
-            .filterNot { it.name.isNullOrBlank() || it.htmlUrl.isNullOrBlank() }
-            .map { RepoEntity(it.name!!, it.htmlUrl!!.toUri()) }
 }

@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlinx-serialization'
 
 androidExtensions {
     experimental = true
@@ -17,6 +18,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        multiDexEnabled = true
     }
     buildTypes {
         release {
@@ -35,20 +37,21 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    packagingOptions {
+        exclude("META-INF/*.kotlin_module")
+    }
 }
 
 dependencies {
     implementation project(':mvi')
 
     // Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
     implementation "androidx.core:core-ktx:$androidKtxVersion"
 
     // UI
     implementation "androidx.appcompat:appcompat:$androidxVersion"
-    //implementation "androidx.drawerlayout:drawerlayout:$androidxVersion"
-    //implementation "androidx.cardview:cardview:$androidxVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
     implementation "com.google.android.material:material:$materialVersion"
 
@@ -58,13 +61,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-common-java8:$androidxArchVersion"
 
     // Data
-    implementation "com.squareup.moshi:moshi-kotlin:$moshiVersion"
-    //implementation "com.squareup.moshi:moshi-adapters:$moshiVersion"
-    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
-    implementation "com.squareup.retrofit2:converter-moshi:$retrofitVersion"
-    implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
-    implementation "com.squareup.okhttp3:logging-interceptor:$okHttpVersion"
-    implementation "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:$retrofitCoroutinesVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinxSerializationVersion"
+    implementation "io.ktor:ktor-client-okhttp:$ktorVersion"
+    implementation "io.ktor:ktor-client-json-jvm:$ktorVersion"
+    implementation "io.ktor:ktor-client-logging-jvm:$ktorVersion"
 
     // Logging
     implementation "com.jakewharton.timber:timber:$timberVersion"

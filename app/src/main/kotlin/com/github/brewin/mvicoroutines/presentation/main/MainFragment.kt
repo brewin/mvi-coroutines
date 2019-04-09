@@ -7,7 +7,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.forEach
 import androidx.fragment.app.Fragment
 import com.github.brewin.mvicoroutines.R
-import com.github.brewin.mvicoroutines.data.remote.GitHubApi
+import com.github.brewin.mvicoroutines.data.remote.GitHubDataSource
 import com.github.brewin.mvicoroutines.data.repository.GitHubRepositoryImpl
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.usecase.SearchReposUseCase
@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 class MainFragment : Fragment(), CoroutineScope {
@@ -39,7 +40,7 @@ class MainFragment : Fragment(), CoroutineScope {
     ): View? {
         machine = provideMachine {
             val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.Default()
-            val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubApi.api))
+            val searchUseCase = SearchReposUseCase(GitHubRepositoryImpl(GitHubDataSource()))
             MainMachine(initial, searchUseCase)
         }
         return inflater.inflate(R.layout.main_fragment, container, false)
