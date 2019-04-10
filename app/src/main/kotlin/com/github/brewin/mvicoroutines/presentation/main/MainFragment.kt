@@ -31,6 +31,15 @@ class MainFragment : Fragment(), CoroutineScope {
         }
     }
 
+    private val errorSnackbar by lazy {
+        Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
+            .addCallback(object : Snackbar.Callback() {
+                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                    machine.events.offer(MainMachine.Event.ErrorMessageDismissed)
+                }
+            })
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -89,18 +98,10 @@ class MainFragment : Fragment(), CoroutineScope {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    private fun showErrorMessage(message: String) {
-        Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
-            .addCallback(object : Snackbar.Callback() {
-                override fun onShown(sb: Snackbar?) {
-                    machine.events.offer(MainMachine.Event.ErrorMessageShown)
-
-                }
-            }).show()
-    }
-
     private fun render(state: MainMachine.State) = state.run {
-        if (shouldShowError) showErrorMessage(errorMessage)
+        if (shouldShowError && !errorSnackbar.isShownOrQueued) {
+            errorSnackbar.setText(errorMessage).show()
+        }
         swipeRefreshLayout.isRefreshing = isInProgress
         repoListAdapter.items = searchResults
     }
@@ -116,6 +117,6 @@ class MainFragment : Fragment(), CoroutineScope {
     }
 
     companion object {
-        const val SAVED_STATE_KEY = "main_fragment_view_state"
+        const val SAVED_STATE_KEY = "main_fragment_saved_state"
     }
 }

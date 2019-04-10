@@ -16,7 +16,7 @@ class MainMachine(
     sealed class Event : Machine.Event {
         data class SearchSubmitted(val query: String) : Event()
         object RefreshClicked : Event()
-        object ErrorMessageShown : Event()
+        object ErrorMessageDismissed : Event()
     }
 
     sealed class Update : Machine.Update {
@@ -38,7 +38,7 @@ class MainMachine(
     override fun handleEvent(event: Event) = when (event) {
         is Event.SearchSubmitted -> searchRepos(event.query)
         Event.RefreshClicked -> searchRepos(state.query)
-        Event.ErrorMessageShown -> hideErrorMessage()
+        Event.ErrorMessageDismissed -> hideErrorMessage()
     }
 
     override fun updateState(update: Update) = when (update) {
@@ -60,7 +60,7 @@ class MainMachine(
     }
 }
 
-/* State updater producers (ie. use cases) */
+/* State update producers (ie. use cases) */
 
 fun MainMachine.searchRepos(query: String) = produce {
     send(MainMachine.Update.Progress(true))
@@ -69,7 +69,7 @@ fun MainMachine.searchRepos(query: String) = produce {
         send(MainMachine.Update.Results(query, searchResults))
     } catch (e: Exception) {
         Timber.e(e)
-        send(MainMachine.Update.Error(query, e.message ?: "Unknown error"))
+        send(MainMachine.Update.Error(query, e.localizedMessage))
     } finally {
         send(MainMachine.Update.Progress(false))
     }
