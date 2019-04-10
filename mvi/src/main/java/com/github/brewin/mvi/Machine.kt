@@ -3,6 +3,8 @@ package com.github.brewin.mvi
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlin.coroutines.CoroutineContext
 
 abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>(
@@ -18,7 +20,7 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
     private val _events = Channel<E>(Channel.CONFLATED)
     val events: SendChannel<E> get() = _events
 
-    private val updateChannels = Channel<ReceiveChannel<U>>(Channel.UNLIMITED)
+    private val updateFlows = Channel<Flow<U>>(Channel.UNLIMITED)
 
     private val _states = ConflatedBroadcastChannel(initialState)
     val states: ReceiveChannel<S> get() = _states.openSubscription()
@@ -28,21 +30,19 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
     init {
         launch {
             _events.consumeEach {
-                updateChannels.send(handleEvent(it))
+                updateFlows.send(handleEvent(it))
             }
         }
         launch {
-            updateChannels.consumeEach { updates ->
-                launch {
-                    updates.consumeEach {
-                        _states.send(updateState(it))
-                    }
+            updateFlows.consumeEach { updates ->
+                updates.collect {
+                    _states.send(updateState(it))
                 }
             }
         }
     }
 
-    protected abstract fun handleEvent(event: E): ReceiveChannel<U>
+    protected abstract fun handleEvent(event: E): Flow<U>
 
     protected abstract fun updateState(update: U): S
 

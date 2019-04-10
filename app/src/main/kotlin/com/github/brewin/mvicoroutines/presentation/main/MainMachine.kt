@@ -5,12 +5,12 @@ import com.github.brewin.mvi.Machine
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.android.parcel.Parcelize
-import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 
 class MainMachine(
     initialState: State,
-    val gitHubRepository: GitHubRepository
+    private val gitHubRepository: GitHubRepository
 ) : Machine<MainMachine.Event, MainMachine.Update, MainMachine.State>(initialState) {
 
     sealed class Event : Machine.Event {
@@ -36,8 +36,8 @@ class MainMachine(
     ) : Machine.State, Parcelable
 
     override fun handleEvent(event: Event) = when (event) {
-        is Event.SearchSubmitted -> searchRepos(event.query)
-        Event.RefreshClicked -> searchRepos(state.query)
+        is Event.SearchSubmitted -> searchRepos(gitHubRepository, event.query)
+        Event.RefreshClicked -> searchRepos(gitHubRepository, state.query)
         Event.ErrorMessageDismissed -> hideErrorMessage()
     }
 
@@ -62,19 +62,19 @@ class MainMachine(
 
 /* State update producers (ie. use cases) */
 
-fun MainMachine.searchRepos(query: String) = produce {
-    send(MainMachine.Update.Progress(true))
+fun searchRepos(gitHubRepository: GitHubRepository, query: String) = flow {
+    emit(MainMachine.Update.Progress(true))
     try {
         val searchResults = gitHubRepository.searchRepos(query)
-        send(MainMachine.Update.Results(query, searchResults))
+        emit(MainMachine.Update.Results(query, searchResults))
     } catch (e: Exception) {
         Timber.e(e)
-        send(MainMachine.Update.Error(query, e.localizedMessage))
+        emit(MainMachine.Update.Error(query, e.localizedMessage))
     } finally {
-        send(MainMachine.Update.Progress(false))
+        emit(MainMachine.Update.Progress(false))
     }
 }
 
-fun MainMachine.hideErrorMessage() = produce {
-    send(MainMachine.Update.HideError)
+fun hideErrorMessage() = flow {
+    emit(MainMachine.Update.HideError)
 }
