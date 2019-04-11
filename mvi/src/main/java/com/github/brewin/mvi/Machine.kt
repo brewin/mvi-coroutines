@@ -29,14 +29,14 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
 
     init {
         launch {
-            _events.consumeEach {
-                updateFlows.send(handleEvent(it))
+            _events.consumeEach { event ->
+                updateFlows.send(handleEvent(event))
             }
         }
         launch {
             updateFlows.consumeEach { updates ->
-                updates.collect {
-                    _states.send(updateState(it))
+                updates.collect { update ->
+                    _states.send(updateState(update))
                 }
             }
         }

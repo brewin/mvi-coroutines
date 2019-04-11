@@ -2,7 +2,7 @@ apply plugin: "com.github.ben-manes.versions"
 
 buildscript {
     ext {
-        kotlinVersion = '1.3.21'
+        kotlinVersion = '1.3.30'
         kotlinxCoroutinesVersion = '1.2.0-alpha-2'
         kotlinxSerializationVersion = '0.11.0-1.3.30-eap-125'
         ktorVersion = '1.2.0-alpha-2'
@@ -19,7 +19,6 @@ buildscript {
         junitVersion = '4.13-beta-2'
     }
     repositories {
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         google()
         jcenter()
     }
@@ -33,7 +32,6 @@ buildscript {
 
 allprojects {
     repositories {
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url "https://kotlin.bintray.com/kotlinx" }
         maven { url "https://dl.bintray.com/kotlin/ktor" }
         google()

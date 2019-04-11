@@ -10,7 +10,7 @@ import timber.log.Timber
 
 class MainMachine(
     initialState: State,
-    private val gitHubRepository: GitHubRepository
+    internal val gitHubRepository: GitHubRepository
 ) : Machine<MainMachine.Event, MainMachine.Update, MainMachine.State>(initialState) {
 
     sealed class Event : Machine.Event {
@@ -36,8 +36,8 @@ class MainMachine(
     ) : Machine.State, Parcelable
 
     override fun handleEvent(event: Event) = when (event) {
-        is Event.SearchSubmitted -> searchRepos(gitHubRepository, event.query)
-        Event.RefreshClicked -> searchRepos(gitHubRepository, state.query)
+        is Event.SearchSubmitted -> searchRepos(event.query)
+        Event.RefreshClicked -> searchRepos(state.query)
         Event.ErrorMessageDismissed -> hideErrorMessage()
     }
 
@@ -60,9 +60,9 @@ class MainMachine(
     }
 }
 
-/* State update producers (ie. use cases) */
+/* State updaters (ie. use cases) */
 
-fun searchRepos(gitHubRepository: GitHubRepository, query: String) = flow {
+fun MainMachine.searchRepos(query: String) = flow {
     emit(MainMachine.Update.Progress(true))
     try {
         val searchResults = gitHubRepository.searchRepos(query)
@@ -75,6 +75,6 @@ fun searchRepos(gitHubRepository: GitHubRepository, query: String) = flow {
     }
 }
 
-fun hideErrorMessage() = flow {
+fun MainMachine.hideErrorMessage() = flow {
     emit(MainMachine.Update.HideError)
 }
