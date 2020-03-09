@@ -21,10 +21,7 @@ class GenericListAdapter<V : View, T>(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<V, T> {
         val view = LayoutInflater.from(parent.context).inflate(layoutResId, parent, false) as V
-        return ViewHolder(
-            view,
-            init
-        )
+        return ViewHolder(view, init)
     }
 
     override fun onBindViewHolder(holder: ViewHolder<V, T>, position: Int) {

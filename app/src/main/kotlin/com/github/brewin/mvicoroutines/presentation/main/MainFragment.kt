@@ -18,11 +18,9 @@ import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
-import kotlin.coroutines.CoroutineContext
 
-class MainFragment : Fragment(), CoroutineScope {
+class MainFragment : Fragment(), CoroutineScope by MainScope() {
 
-    override val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private lateinit var machine: MainMachine
 
     private val repoListAdapter by lazy {
@@ -70,7 +68,8 @@ class MainFragment : Fragment(), CoroutineScope {
         menu.forEach {
             when (it.itemId) {
                 R.id.action_search -> {
-                    (it.actionView as SearchView).setOnQueryTextListener(
+                    val searchView = it.actionView as SearchView
+                    searchView.setOnQueryTextListener(
                         object : SearchView.OnQueryTextListener {
                             override fun onQueryTextSubmit(query: String?): Boolean {
                                 if (query != null && query.isNotBlank()) {
@@ -78,7 +77,7 @@ class MainFragment : Fragment(), CoroutineScope {
                                         MainMachine.Event.SearchSubmitted(query.trim())
                                     )
                                 }
-                                hideKeyboard()
+                                searchView.hideKeyboard()
                                 return true
                             }
 

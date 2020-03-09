@@ -9,15 +9,14 @@ androidExtensions {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
         applicationId "com.github.brewin.mvicoroutines"
-        minSdkVersion 19
-        targetSdkVersion 28
+        minSdkVersion 21
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
     }
     buildTypes {
@@ -37,6 +36,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
     packagingOptions {
         exclude("META-INF/*.kotlin_module")
     }
@@ -47,23 +49,25 @@ dependencies {
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
-    implementation "androidx.core:core-ktx:$androidKtxVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
+    implementation "androidx.core:core-ktx:$coreKtxVersion"
 
     // UI
-    implementation "androidx.appcompat:appcompat:$androidxVersion"
-    implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
+    implementation "androidx.appcompat:appcompat:$appCompatVersion"
     implementation "com.google.android.material:material:$materialVersion"
+    implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipeRefreshLayoutVersion"
 
     // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime:$androidxArchVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$androidxArchVersion"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$androidxArchVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
 
     // Data
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinxSerializationVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion"
     implementation "io.ktor:ktor-client-okhttp:$ktorVersion"
     implementation "io.ktor:ktor-client-json-jvm:$ktorVersion"
+    implementation "io.ktor:ktor-client-serialization-jvm:$ktorVersion"
     implementation "io.ktor:ktor-client-logging-jvm:$ktorVersion"
 
     // Logging
