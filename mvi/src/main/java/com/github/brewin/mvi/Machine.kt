@@ -1,21 +1,19 @@
 package com.github.brewin.mvi
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.*
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.launch
 
 abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>(
     initialState: S
-) : ViewModel(), CoroutineScope {
+) : ViewModel() {
 
     interface Event
     interface Update
     interface State
-
-    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.IO
 
     private val _events = Channel<E>(Channel.CONFLATED)
     val events: SendChannel<E> get() = _events
@@ -28,12 +26,12 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
     val state get() = _states.value
 
     init {
-        launch {
+        viewModelScope.launch {
             _events.consumeEach { event ->
                 updateFlows.send(handleEvent(event))
             }
         }
-        launch {
+        viewModelScope.launch {
             updateFlows.consumeEach { updates ->
                 updates.collect { update ->
                     _states.send(updateState(update))
@@ -45,9 +43,4 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
     protected abstract fun handleEvent(event: E): Flow<U>
 
     protected abstract fun updateState(update: U): S
-
-    override fun onCleared() {
-        super.onCleared()
-        coroutineContext.cancel()
-    }
 }

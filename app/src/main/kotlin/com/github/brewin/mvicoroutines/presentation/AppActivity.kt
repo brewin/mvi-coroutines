@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.github.brewin.mvicoroutines.R
 import kotlinx.android.synthetic.main.nav_activity.*
 
-class NavActivity : AppCompatActivity() {
+class AppActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

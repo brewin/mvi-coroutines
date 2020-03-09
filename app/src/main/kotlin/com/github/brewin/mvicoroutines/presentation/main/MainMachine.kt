@@ -3,10 +3,10 @@ package com.github.brewin.mvicoroutines.presentation.main
 import android.os.Parcelable
 import com.github.brewin.mvi.Machine
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
+import com.github.brewin.mvicoroutines.domain.foldSuspend
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.flow
-import timber.log.Timber
 
 class MainMachine(
     initialState: State,
@@ -64,15 +64,16 @@ class MainMachine(
 
 fun MainMachine.searchRepos(query: String) = flow {
     emit(MainMachine.Update.Progress(true))
-    try {
-        val searchResults = gitHubRepository.searchRepos(query)
-        emit(MainMachine.Update.Results(query, searchResults))
-    } catch (e: Exception) {
-        Timber.e(e)
-        emit(MainMachine.Update.Error(query, e.localizedMessage))
-    } finally {
-        emit(MainMachine.Update.Progress(false))
-    }
+    gitHubRepository.searchRepos(query)
+        .foldSuspend(
+            onLeft = { error ->
+                emit(MainMachine.Update.Error(query, error.message))
+            },
+            onRight = { searchResults ->
+                emit(MainMachine.Update.Results(query, searchResults))
+            }
+        )
+    emit(MainMachine.Update.Progress(false))
 }
 
 fun MainMachine.hideErrorMessage() = flow {

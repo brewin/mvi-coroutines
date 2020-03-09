@@ -11,13 +11,16 @@ import com.github.brewin.mvicoroutines.data.remote.GitHubDataSource
 import com.github.brewin.mvicoroutines.data.repository.GitHubRepositoryImpl
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.presentation.common.GenericListAdapter
+import com.github.brewin.mvicoroutines.presentation.common.hideKeyboard
 import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
-import hideKeyboard
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
 
 class MainFragment : Fragment(), CoroutineScope by MainScope() {
 
