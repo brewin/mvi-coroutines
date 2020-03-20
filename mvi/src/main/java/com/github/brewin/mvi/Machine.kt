@@ -11,18 +11,14 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>(
-    initialState: S
+abstract class Machine<EVENT, UPDATE, STATE>(
+    initialState: STATE
 ) : ViewModel() {
 
-    interface Event
-    interface Update
-    interface State
+    private val _events = Channel<EVENT>(Channel.CONFLATED)
+    val events: SendChannel<EVENT> get() = _events
 
-    private val _events = Channel<E>(Channel.CONFLATED)
-    val events: SendChannel<E> get() = _events
-
-    private val updateFlows = Channel<Flow<U>>(Channel.UNLIMITED)
+    private val updateFlows = Channel<Flow<UPDATE>>(Channel.UNLIMITED)
 
     private val _states = ConflatedBroadcastChannel(initialState)
     val states get() = _states.asFlow()
@@ -44,7 +40,7 @@ abstract class Machine<E : Machine.Event, U : Machine.Update, S : Machine.State>
         }
     }
 
-    protected abstract fun handleEvent(event: E): Flow<U>
+    protected abstract fun handleEvent(event: EVENT): Flow<UPDATE>
 
-    protected abstract fun updateState(update: U): S
+    protected abstract fun updateState(update: UPDATE): STATE
 }

@@ -17,6 +17,8 @@ import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -34,7 +36,7 @@ class MainFragment : Fragment() {
         Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
             .addCallback(object : Snackbar.Callback() {
                 override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    machine.events.offer(MainMachine.Event.ErrorMessageDismissed)
+                    machine.events.offer(MainEvent.ErrorMessageDismissed)
                 }
             })
     }
@@ -45,7 +47,7 @@ class MainFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         machine = provideMachine {
-            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainMachine.State()
+            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState()
             val gitHubRepository = GitHubRepositoryImpl(GitHubDataSource())
             MainMachine(initial, gitHubRepository)
         }
@@ -56,7 +58,7 @@ class MainFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
         swipeRefreshLayout.setOnRefreshListener {
-            machine.events.offer(MainMachine.Event.RefreshClicked)
+            machine.events.offer(MainEvent.RefreshClicked)
         }
         repoListView.adapter = repoListAdapter
 
@@ -76,7 +78,7 @@ class MainFragment : Fragment() {
                             override fun onQueryTextSubmit(query: String?): Boolean {
                                 if (query != null && query.isNotBlank()) {
                                     machine.events.offer(
-                                        MainMachine.Event.SearchSubmitted(query.trim())
+                                        MainEvent.SearchSubmitted(query.trim())
                                     )
                                 }
                                 searchView.hideKeyboard()
@@ -90,7 +92,7 @@ class MainFragment : Fragment() {
                 }
                 R.id.action_refresh -> {
                     it.setOnMenuItemClickListener {
-                        machine.events.offer(MainMachine.Event.RefreshClicked)
+                        machine.events.offer(MainEvent.RefreshClicked)
                         true
                     }
                 }
@@ -99,7 +101,7 @@ class MainFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    private fun render(state: MainMachine.State) = state.run {
+    private fun render(state: MainState) = state.run {
         if (shouldShowError && !errorSnackbar.isShownOrQueued) {
             errorSnackbar.setText(errorMessage).show()
         }

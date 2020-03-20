@@ -8,53 +8,53 @@ import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.flow
 
+sealed class MainEvent  {
+    data class SearchSubmitted(val query: String) : MainEvent()
+    object RefreshClicked : MainEvent()
+    object ErrorMessageDismissed : MainEvent()
+}
+
+sealed class MainUpdate  {
+    data class Progress(val isInProgress: Boolean) : MainUpdate()
+    data class Results(val query: String, val searchResults: List<RepoEntity>) : MainUpdate()
+    data class Error(val query: String, val errorMessage: String) : MainUpdate()
+    object HideError : MainUpdate()
+}
+
+@Parcelize
+data class MainState(
+    val query: String = "",
+    val searchResults: List<RepoEntity> = emptyList(),
+    val isInProgress: Boolean = false,
+    val errorMessage: String = "",
+    val shouldShowError: Boolean = false
+) : Parcelable
+
 class MainMachine(
-    initialState: State,
+    initialState: MainState,
     internal val gitHubRepository: GitHubRepository
-) : Machine<MainMachine.Event, MainMachine.Update, MainMachine.State>(initialState) {
+) : Machine<MainEvent, MainUpdate, MainState>(initialState) {
 
-    sealed class Event : Machine.Event {
-        data class SearchSubmitted(val query: String) : Event()
-        object RefreshClicked : Event()
-        object ErrorMessageDismissed : Event()
+    override fun handleEvent(event: MainEvent) = when (event) {
+        is MainEvent.SearchSubmitted -> searchRepos(event.query)
+        MainEvent.RefreshClicked -> searchRepos(state.query)
+        MainEvent.ErrorMessageDismissed -> hideErrorMessage()
     }
 
-    sealed class Update : Machine.Update {
-        data class Progress(val isInProgress: Boolean) : Update()
-        data class Results(val query: String, val searchResults: List<RepoEntity>) : Update()
-        data class Error(val query: String, val errorMessage: String) : Update()
-        object HideError : Update()
-    }
-
-    @Parcelize
-    data class State(
-        val query: String = "",
-        val searchResults: List<RepoEntity> = emptyList(),
-        val isInProgress: Boolean = false,
-        val errorMessage: String = "",
-        val shouldShowError: Boolean = false
-    ) : Machine.State, Parcelable
-
-    override fun handleEvent(event: Event) = when (event) {
-        is Event.SearchSubmitted -> searchRepos(event.query)
-        Event.RefreshClicked -> searchRepos(state.query)
-        Event.ErrorMessageDismissed -> hideErrorMessage()
-    }
-
-    override fun updateState(update: Update) = when (update) {
-        is Update.Progress -> state.copy(
+    override fun updateState(update: MainUpdate) = when (update) {
+        is MainUpdate.Progress -> state.copy(
             isInProgress = update.isInProgress
         )
-        is Update.Results -> state.copy(
+        is MainUpdate.Results -> state.copy(
             query = update.query,
             searchResults = update.searchResults
         )
-        is Update.Error -> state.copy(
+        is MainUpdate.Error -> state.copy(
             query = update.query,
             errorMessage = update.errorMessage,
             shouldShowError = true
         )
-        Update.HideError -> state.copy(
+        MainUpdate.HideError -> state.copy(
             shouldShowError = false
         )
     }
@@ -63,19 +63,19 @@ class MainMachine(
 /* State updaters (ie. use cases) */
 
 fun MainMachine.searchRepos(query: String) = flow {
-    emit(MainMachine.Update.Progress(true))
+    emit(MainUpdate.Progress(true))
     gitHubRepository.searchRepos(query)
         .foldSuspend(
             onLeft = { error ->
-                emit(MainMachine.Update.Error(query, error.message))
+                emit(MainUpdate.Error(query, error.message))
             },
             onRight = { searchResults ->
-                emit(MainMachine.Update.Results(query, searchResults))
+                emit(MainUpdate.Results(query, searchResults))
             }
         )
-    emit(MainMachine.Update.Progress(false))
+    emit(MainUpdate.Progress(false))
 }
 
 fun MainMachine.hideErrorMessage() = flow {
-    emit(MainMachine.Update.HideError)
+    emit(MainUpdate.HideError)
 }
