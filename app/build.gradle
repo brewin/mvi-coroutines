@@ -57,8 +57,13 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipeRefreshLayoutVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
-
     implementation "com.google.android.material:material:$materialVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-android:$flowbindingVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-core:$flowbindingVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-appcompat:$flowbindingVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-swiperefreshlayout:$flowbindingVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-recyclerview:$flowbindingVersion"
+    implementation "io.github.reactivecircus.flowbinding:flowbinding-material:$flowbindingVersion"
 
     // Lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"

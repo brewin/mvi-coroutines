@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.SearchView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.forEach
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.brewin.mvicoroutines.R
@@ -17,10 +16,14 @@ import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import reactivecircus.flowbinding.android.view.clicks
+import reactivecircus.flowbinding.appcompat.QueryTextEvent
+import reactivecircus.flowbinding.appcompat.queryTextEvents
+import reactivecircus.flowbinding.material.dismissEvents
+import reactivecircus.flowbinding.swiperefreshlayout.refreshes
 
 class MainFragment : Fragment() {
 
@@ -34,11 +37,11 @@ class MainFragment : Fragment() {
 
     private val errorSnackbar by lazy {
         Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
-            .addCallback(object : Snackbar.Callback() {
-                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    machine.events.offer(MainEvent.ErrorMessageDismissed)
-                }
-            })
+            .apply {
+                dismissEvents()
+                    .onEach { machine.events.send(MainEvent.ErrorMessageDismissed) }
+                    .launchIn(lifecycleScope)
+            }
     }
 
     override fun onCreateView(
@@ -57,61 +60,50 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
-        swipeRefreshLayout.setOnRefreshListener {
-            machine.events.offer(MainEvent.RefreshClicked)
-        }
+
         repoListView.adapter = repoListAdapter
 
+        swipeRefreshLayout
+            .refreshes()
+            .onEach { machine.events.send(MainEvent.RefreshSwiped) }
+            .launchIn(lifecycleScope)
+
         machine.states
-            .onEach { render(it) }
+            .onEach { it.render() }
             .launchIn(lifecycleScope)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
-        menu.forEach {
-            when (it.itemId) {
-                R.id.action_search -> {
-                    val searchView = it.actionView as SearchView
-                    searchView.setOnQueryTextListener(
-                        object : SearchView.OnQueryTextListener {
-                            override fun onQueryTextSubmit(query: String?): Boolean {
-                                if (query != null && query.isNotBlank()) {
-                                    machine.events.offer(
-                                        MainEvent.SearchSubmitted(query.trim())
-                                    )
-                                }
-                                searchView.hideKeyboard()
-                                return true
-                            }
 
-                            override fun onQueryTextChange(newText: String?): Boolean {
-                                return false
-                            }
-                        })
-                }
-                R.id.action_refresh -> {
-                    it.setOnMenuItemClickListener {
-                        machine.events.offer(MainEvent.RefreshClicked)
-                        true
-                    }
-                }
-            }
-        }
+        menu.findItem(R.id.action_search).actionView
+            .let { it as SearchView }
+            .queryTextEvents()
+            .filterIsInstance<QueryTextEvent.QuerySubmitted>()
+            .onEach {
+                machine.events.send(MainEvent.SearchSubmitted(it.queryText.toString()))
+                hideKeyboard()
+            }.launchIn(lifecycleScope)
+
+        menu.findItem(R.id.action_refresh)
+            .clicks()
+            .onEach { machine.events.send(MainEvent.RefreshClicked) }
+            .launchIn(lifecycleScope)
+
         super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    private fun render(state: MainState) = state.run {
-        if (shouldShowError && !errorSnackbar.isShownOrQueued) {
-            errorSnackbar.setText(errorMessage).show()
-        }
-        swipeRefreshLayout.isRefreshing = isInProgress
-        repoListAdapter.items = searchResults
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable(SAVED_STATE_KEY, machine.state)
         super.onSaveInstanceState(outState)
+    }
+
+    private fun MainState.render() {
+        if (shouldShowError && !errorSnackbar.isShownOrQueued) {
+            errorSnackbar.setText(errorMessage).show()
+        }
+        swipeRefreshLayout.isRefreshing = isInProgress
+        repoListAdapter.items = searchResults
     }
 
     companion object {

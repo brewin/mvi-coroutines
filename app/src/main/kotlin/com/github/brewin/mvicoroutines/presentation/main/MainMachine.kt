@@ -8,13 +8,14 @@ import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.flow
 
-sealed class MainEvent  {
+sealed class MainEvent {
     data class SearchSubmitted(val query: String) : MainEvent()
     object RefreshClicked : MainEvent()
+    object RefreshSwiped : MainEvent()
     object ErrorMessageDismissed : MainEvent()
 }
 
-sealed class MainUpdate  {
+sealed class MainUpdate {
     data class Progress(val isInProgress: Boolean) : MainUpdate()
     data class Results(val query: String, val searchResults: List<RepoEntity>) : MainUpdate()
     data class Error(val query: String, val errorMessage: String) : MainUpdate()
@@ -37,7 +38,8 @@ class MainMachine(
 
     override fun handleEvent(event: MainEvent) = when (event) {
         is MainEvent.SearchSubmitted -> searchRepos(event.query)
-        MainEvent.RefreshClicked -> searchRepos(state.query)
+        MainEvent.RefreshClicked,
+        MainEvent.RefreshSwiped -> searchRepos(state.query)
         MainEvent.ErrorMessageDismissed -> hideErrorMessage()
     }
 
