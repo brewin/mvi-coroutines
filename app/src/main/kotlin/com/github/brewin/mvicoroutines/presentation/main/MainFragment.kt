@@ -39,7 +39,7 @@ class MainFragment : Fragment() {
         Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
             .apply {
                 dismissEvents()
-                    .onEach { machine.events.send(MainEvent.ErrorMessageDismissed) }
+                    .onEach { machine.events.send(MainEvent.ErrorMessageDismiss) }
                     .launchIn(lifecycleScope)
             }
     }
@@ -65,7 +65,7 @@ class MainFragment : Fragment() {
 
         swipeRefreshLayout
             .refreshes()
-            .onEach { machine.events.send(MainEvent.RefreshSwiped) }
+            .onEach { machine.events.send(MainEvent.RefreshSwipe) }
             .launchIn(lifecycleScope)
 
         machine.states
@@ -81,13 +81,13 @@ class MainFragment : Fragment() {
             .queryTextEvents()
             .filterIsInstance<QueryTextEvent.QuerySubmitted>()
             .onEach {
-                machine.events.send(MainEvent.SearchSubmitted(it.queryText.toString()))
+                machine.events.send(MainEvent.QuerySubmit(it.queryText.toString()))
                 hideKeyboard()
             }.launchIn(lifecycleScope)
 
         menu.findItem(R.id.action_refresh)
             .clicks()
-            .onEach { machine.events.send(MainEvent.RefreshClicked) }
+            .onEach { machine.events.send(MainEvent.RefreshClick) }
             .launchIn(lifecycleScope)
 
         super.onCreateOptionsMenu(menu, inflater)

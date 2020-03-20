@@ -11,9 +11,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-abstract class Machine<EVENT, UPDATE, STATE>(
-    initialState: STATE
-) : ViewModel() {
+abstract class Machine<EVENT, UPDATE, STATE>(initialState: STATE) : ViewModel() {
 
     private val _events = Channel<EVENT>(Channel.CONFLATED)
     val events: SendChannel<EVENT> get() = _events

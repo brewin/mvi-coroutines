@@ -9,10 +9,10 @@ import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.flow
 
 sealed class MainEvent {
-    data class SearchSubmitted(val query: String) : MainEvent()
-    object RefreshClicked : MainEvent()
-    object RefreshSwiped : MainEvent()
-    object ErrorMessageDismissed : MainEvent()
+    data class QuerySubmit(val query: String) : MainEvent()
+    object RefreshClick : MainEvent()
+    object RefreshSwipe : MainEvent()
+    object ErrorMessageDismiss : MainEvent()
 }
 
 sealed class MainUpdate {
@@ -37,10 +37,10 @@ class MainMachine(
 ) : Machine<MainEvent, MainUpdate, MainState>(initialState) {
 
     override fun handleEvent(event: MainEvent) = when (event) {
-        is MainEvent.SearchSubmitted -> searchRepos(event.query)
-        MainEvent.RefreshClicked,
-        MainEvent.RefreshSwiped -> searchRepos(state.query)
-        MainEvent.ErrorMessageDismissed -> hideErrorMessage()
+        is MainEvent.QuerySubmit -> searchRepos(event.query)
+        MainEvent.RefreshClick,
+        MainEvent.RefreshSwipe -> searchRepos(state.query)
+        MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
 
     override fun updateState(update: MainUpdate) = when (update) {
