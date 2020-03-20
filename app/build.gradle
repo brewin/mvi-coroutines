@@ -54,14 +54,18 @@ dependencies {
 
     // UI
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
-    implementation "com.google.android.material:material:$materialVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipeRefreshLayoutVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
+
+    implementation "com.google.android.material:material:$materialVersion"
 
     // Lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleExtVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleExtVersion"
 
     // Data
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion"

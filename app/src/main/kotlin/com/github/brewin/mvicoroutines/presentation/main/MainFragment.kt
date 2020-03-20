@@ -6,6 +6,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.forEach
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.remote.GitHubDataSource
 import com.github.brewin.mvicoroutines.data.repository.GitHubRepositoryImpl
@@ -16,13 +17,10 @@ import com.github.brewin.mvicoroutines.presentation.common.provideMachine
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.repo_item.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
-class MainFragment : Fragment(), CoroutineScope by MainScope() {
+class MainFragment : Fragment() {
 
     private lateinit var machine: MainMachine
 
@@ -61,9 +59,10 @@ class MainFragment : Fragment(), CoroutineScope by MainScope() {
             machine.events.offer(MainMachine.Event.RefreshClicked)
         }
         repoListView.adapter = repoListAdapter
-        launch {
-            machine.states.consumeEach(::render)
-        }
+
+        machine.states
+            .onEach { render(it) }
+            .launchIn(lifecycleScope)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -111,11 +110,6 @@ class MainFragment : Fragment(), CoroutineScope by MainScope() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable(SAVED_STATE_KEY, machine.state)
         super.onSaveInstanceState(outState)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        coroutineContext.cancel()
     }
 
     companion object {
