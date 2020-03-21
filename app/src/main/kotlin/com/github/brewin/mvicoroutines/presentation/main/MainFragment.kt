@@ -44,7 +44,6 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setHasOptionsMenu(true)
 
         machine = provideMachine {
             val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState()
