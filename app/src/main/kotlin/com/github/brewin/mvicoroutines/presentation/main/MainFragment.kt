@@ -46,7 +46,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         machine = provideMachine {
-            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState()
+            val initial = savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.default()
             val gitHubRepository = GitHubRepositoryImpl(GitHubDataSource())
             MainMachine(initial, gitHubRepository)
         }
@@ -59,8 +59,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(SAVED_STATE_KEY, machine.state)
         super.onSaveInstanceState(outState)
+
+        outState.putParcelable(SAVED_STATE_KEY, machine.state)
     }
 
     private fun MainFragmentBinding.setup() {

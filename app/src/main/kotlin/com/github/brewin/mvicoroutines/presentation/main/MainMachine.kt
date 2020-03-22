@@ -24,36 +24,47 @@ sealed class MainUpdate {
 
 @Parcelize
 data class MainState(
-    val query: String = "",
-    val searchResults: List<RepoEntity> = emptyList(),
-    val isInProgress: Boolean = false,
-    val errorMessage: String = "",
-    val shouldShowError: Boolean = false
-) : Parcelable
+    val query: String,
+    val searchResults: List<RepoEntity>,
+    val isInProgress: Boolean,
+    val errorMessage: String,
+    val shouldShowError: Boolean
+) : Parcelable {
+
+    companion object {
+        fun default() = MainState(
+            query = "",
+            searchResults = emptyList(),
+            isInProgress = false,
+            errorMessage = "",
+            shouldShowError = false
+        )
+    }
+}
 
 class MainMachine(
     initialState: MainState,
     internal val gitHubRepository: GitHubRepository
 ) : Machine<MainEvent, MainUpdate, MainState>(initialState) {
 
-    override fun handleEvent(event: MainEvent) = when (event) {
-        is MainEvent.QuerySubmit -> searchRepos(event.query)
+    override fun MainEvent.toUpdateFlow() = when (this) {
+        is MainEvent.QuerySubmit -> searchRepos(query)
         MainEvent.RefreshClick,
         MainEvent.RefreshSwipe -> searchRepos(state.query)
         MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
 
-    override fun updateState(update: MainUpdate) = when (update) {
+    override fun MainUpdate.toState() = when (this) {
         is MainUpdate.Progress -> state.copy(
-            isInProgress = update.isInProgress
+            isInProgress = isInProgress
         )
         is MainUpdate.Results -> state.copy(
-            query = update.query,
-            searchResults = update.searchResults
+            query = query,
+            searchResults = searchResults
         )
         is MainUpdate.Error -> state.copy(
-            query = update.query,
-            errorMessage = update.errorMessage,
+            query = query,
+            errorMessage = errorMessage,
             shouldShowError = true
         )
         MainUpdate.HideError -> state.copy(
@@ -62,7 +73,7 @@ class MainMachine(
     }
 }
 
-/* State updaters (ie. use cases) */
+/* Update Flows (ie. use cases) */
 
 fun MainMachine.searchRepos(query: String) = flow {
     emit(MainUpdate.Progress(true))

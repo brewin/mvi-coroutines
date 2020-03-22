@@ -5,40 +5,30 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
+
+// TODO: Use DataFlow when available.
+// https://github.com/Kotlin/kotlinx.coroutines/pull/1354
 
 abstract class Machine<EVENT, UPDATE, STATE>(initialState: STATE) : ViewModel() {
 
     private val _events = Channel<EVENT>(Channel.CONFLATED)
-    val events: SendChannel<EVENT> get() = _events
-
-    private val updateFlows = Channel<Flow<UPDATE>>(Channel.UNLIMITED)
+    val events: SendChannel<EVENT> = _events
 
     private val _states = ConflatedBroadcastChannel(initialState)
-    val states get() = _states.asFlow()
+    val states = _states.asFlow()
 
     val state get() = _states.value
 
     init {
-        viewModelScope.launch {
-            _events.consumeEach { event ->
-                updateFlows.send(handleEvent(event))
-            }
-        }
-        viewModelScope.launch {
-            updateFlows.consumeEach { updates ->
-                updates.collect { update ->
-                    _states.send(updateState(update))
-                }
-            }
-        }
+        _events.consumeAsFlow()
+            .flatMapConcat { it.toUpdateFlow() }
+            .map { it.toState() }
+            .onEach { _states.send(it) }
+            .launchIn(viewModelScope)
     }
 
-    protected abstract fun handleEvent(event: EVENT): Flow<UPDATE>
+    protected abstract fun EVENT.toUpdateFlow(): Flow<UPDATE>
 
-    protected abstract fun updateState(update: UPDATE): STATE
+    protected abstract fun UPDATE.toState(): STATE
 }
