@@ -2,6 +2,7 @@ package com.github.brewin.mvi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -25,6 +26,7 @@ abstract class Machine<EVENT, UPDATE, STATE>(initialState: STATE) : ViewModel() 
             .flatMapConcat { it.toUpdateFlow() }
             .map { it.toState() }
             .onEach { _states.send(it) }
+            .flowOn(Dispatchers.IO)
             .launchIn(viewModelScope)
     }
 

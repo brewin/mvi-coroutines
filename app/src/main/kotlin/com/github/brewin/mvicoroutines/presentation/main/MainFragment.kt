@@ -60,7 +60,6 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-
         outState.putParcelable(SAVED_STATE_KEY, machine.state)
     }
 
@@ -83,12 +82,12 @@ class MainFragment : Fragment(R.layout.main_fragment) {
                 .launchIn(lifecycleScope)
         }
 
-        repoListView.adapter = repoListAdapter
-
         swipeRefreshLayout
             .refreshes()
             .onEach { machine.events.send(MainEvent.RefreshSwipe) }
             .launchIn(lifecycleScope)
+
+        repoListView.adapter = repoListAdapter
     }
 
     private fun MainState.render() {
