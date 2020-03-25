@@ -48,8 +48,6 @@ android {
 }
 
 dependencies {
-    implementation project(':mvi')
-
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
@@ -59,7 +57,6 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipeRefreshLayoutVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
     implementation "com.google.android.material:material:$materialVersion"
     implementation "io.github.reactivecircus.flowbinding:flowbinding-android:$flowbindingVersion"
     implementation "io.github.reactivecircus.flowbinding:flowbinding-core:$flowbindingVersion"
@@ -71,10 +68,9 @@ dependencies {
     // Lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtVersion"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleExtVersion"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleExtVersion"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleExtVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtensionsVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleKtxVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleKtxVersion"
 
     // Data
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion"

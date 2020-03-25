@@ -4,7 +4,7 @@
     tools:context=".presentation.AppActivity">
     <item
         android:id="@+id/action_search"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_search"
         android:title="@string/action_search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom" />
@@ -12,5 +12,10 @@
         android:id="@+id/action_refresh"
         android:icon="@drawable/ic_refresh"
         android:title="@string/action_refresh"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_random"
+        android:icon="@drawable/ic_question"
+        android:title="@string/action_random"
         app:showAsAction="ifRoom" />
 </menu>

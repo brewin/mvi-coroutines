@@ -12,9 +12,8 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 /*
- * https://github.com/Zhuinden/ViewBindingExample
+ * Credit: https://github.com/Zhuinden/ViewBindingExample
  */
-
 class FragmentViewBindingDelegate<T : ViewBinding>(
     val fragment: Fragment,
     val viewBindingFactory: (View) -> T

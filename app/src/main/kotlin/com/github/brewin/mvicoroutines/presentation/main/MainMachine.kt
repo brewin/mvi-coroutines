@@ -1,17 +1,20 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import android.os.Parcelable
-import com.github.brewin.mvi.Machine
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.foldSuspend
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
+import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlin.random.Random
 
 sealed class MainEvent {
     data class QuerySubmit(val query: String) : MainEvent()
     object RefreshClick : MainEvent()
     object RefreshSwipe : MainEvent()
+    object RandomClick : MainEvent()
     object ErrorMessageDismiss : MainEvent()
 }
 
@@ -20,6 +23,7 @@ sealed class MainUpdate {
     data class Results(val query: String, val searchResults: List<RepoEntity>) : MainUpdate()
     data class Error(val query: String, val errorMessage: String) : MainUpdate()
     object HideError : MainUpdate()
+    data class Random(val randomNumber: Int) : MainUpdate()
 }
 
 @Parcelize
@@ -28,7 +32,8 @@ data class MainState(
     val searchResults: List<RepoEntity>,
     val isInProgress: Boolean,
     val errorMessage: String,
-    val shouldShowError: Boolean
+    val shouldShowError: Boolean,
+    val randomNumber: Int
 ) : Parcelable {
 
     companion object {
@@ -37,20 +42,23 @@ data class MainState(
             searchResults = emptyList(),
             isInProgress = false,
             errorMessage = "",
-            shouldShowError = false
+            shouldShowError = false,
+            randomNumber = Random.nextInt()
         )
     }
 }
 
 class MainMachine(
+    events: Flow<MainEvent>,
     initialState: MainState,
     internal val gitHubRepository: GitHubRepository
-) : Machine<MainEvent, MainUpdate, MainState>(initialState) {
+) : Machine<MainEvent, MainUpdate, MainState>(events, initialState) {
 
-    override fun MainEvent.toUpdateFlow() = when (this) {
+    override fun MainEvent.toUpdates() = when (this) {
         is MainEvent.QuerySubmit -> searchRepos(query)
         MainEvent.RefreshClick,
         MainEvent.RefreshSwipe -> searchRepos(state.query)
+        MainEvent.RandomClick -> newRandomNumber()
         MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
 
@@ -70,6 +78,9 @@ class MainMachine(
         MainUpdate.HideError -> state.copy(
             shouldShowError = false
         )
+        is MainUpdate.Random -> state.copy(
+            randomNumber = randomNumber
+        )
     }
 }
 
@@ -87,6 +98,10 @@ fun MainMachine.searchRepos(query: String) = flow {
             }
         )
     emit(MainUpdate.Progress(false))
+}
+
+fun MainMachine.newRandomNumber() = flow {
+    emit(MainUpdate.Random(Random.nextInt()))
 }
 
 fun MainMachine.hideErrorMessage() = flow {
