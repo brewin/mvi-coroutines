@@ -18,14 +18,6 @@ sealed class MainEvent {
     object ErrorMessageDismiss : MainEvent()
 }
 
-sealed class MainUpdate {
-    data class Progress(val isInProgress: Boolean) : MainUpdate()
-    data class Results(val query: String, val searchResults: List<RepoEntity>) : MainUpdate()
-    data class Error(val query: String, val errorMessage: String) : MainUpdate()
-    object HideError : MainUpdate()
-    data class Random(val randomNumber: Int) : MainUpdate()
-}
-
 @Parcelize
 data class MainState(
     val query: String,
@@ -52,58 +44,36 @@ class MainMachine(
     events: Flow<MainEvent>,
     initialState: MainState,
     internal val gitHubRepository: GitHubRepository
-) : Machine<MainEvent, MainUpdate, MainState>(events, initialState) {
+) : Machine<MainEvent, MainState>(events, initialState) {
 
-    override fun MainEvent.toUpdates() = when (this) {
+    override fun MainEvent.toState() = when (this) {
         is MainEvent.QuerySubmit -> searchRepos(query)
         MainEvent.RefreshClick,
         MainEvent.RefreshSwipe -> searchRepos(state.query)
         MainEvent.RandomClick -> newRandomNumber()
         MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
-
-    override fun MainUpdate.toState() = when (this) {
-        is MainUpdate.Progress -> state.copy(
-            isInProgress = isInProgress
-        )
-        is MainUpdate.Results -> state.copy(
-            query = query,
-            searchResults = searchResults
-        )
-        is MainUpdate.Error -> state.copy(
-            query = query,
-            errorMessage = errorMessage,
-            shouldShowError = true
-        )
-        MainUpdate.HideError -> state.copy(
-            shouldShowError = false
-        )
-        is MainUpdate.Random -> state.copy(
-            randomNumber = randomNumber
-        )
-    }
 }
 
-/* Update Flows (ie. use cases) */
+/* State Mutations (ie. use cases) */
 
 fun MainMachine.searchRepos(query: String) = flow {
-    emit(MainUpdate.Progress(true))
+    emit(state.copy(isInProgress = true))
     gitHubRepository.searchRepos(query)
         .foldSuspend(
             onLeft = { error ->
-                emit(MainUpdate.Error(query, error.message))
+                emit(state.copy(query = query, errorMessage = error.message, isInProgress = false))
             },
             onRight = { searchResults ->
-                emit(MainUpdate.Results(query, searchResults))
+                emit(state.copy(query = query, searchResults = searchResults, isInProgress = false))
             }
         )
-    emit(MainUpdate.Progress(false))
 }
 
 fun MainMachine.newRandomNumber() = flow {
-    emit(MainUpdate.Random(Random.nextInt()))
+    emit(state.copy(randomNumber = Random.nextInt()))
 }
 
 fun MainMachine.hideErrorMessage() = flow {
-    emit(MainUpdate.HideError)
+    emit(state.copy(shouldShowError = false))
 }
