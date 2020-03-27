@@ -8,13 +8,14 @@ import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlin.random.Random
+import java.util.*
+import kotlin.time.ExperimentalTime
 
 sealed class MainEvent {
     data class QuerySubmit(val query: String) : MainEvent()
     object RefreshClick : MainEvent()
     object RefreshSwipe : MainEvent()
-    object RandomClick : MainEvent()
+    object TestClick : MainEvent()
     object ErrorMessageDismiss : MainEvent()
 }
 
@@ -25,18 +26,18 @@ data class MainState(
     val isInProgress: Boolean,
     val errorMessage: String,
     val shouldShowError: Boolean,
-    val randomNumber: Int
+    val timestamp: Long
 ) : Parcelable {
 
     companion object {
-        fun default() = MainState(
-            query = "",
-            searchResults = emptyList(),
-            isInProgress = false,
-            errorMessage = "",
-            shouldShowError = false,
-            randomNumber = Random.nextInt()
-        )
+        val DEFAULT = MainState(
+                query = "",
+                searchResults = emptyList(),
+                isInProgress = false,
+                errorMessage = "",
+                shouldShowError = false,
+                timestamp = Calendar.getInstance().timeInMillis
+            )
     }
 }
 
@@ -50,7 +51,7 @@ class MainMachine(
         is MainEvent.QuerySubmit -> searchRepos(query)
         MainEvent.RefreshClick,
         MainEvent.RefreshSwipe -> searchRepos(state.query)
-        MainEvent.RandomClick -> newRandomNumber()
+        MainEvent.TestClick -> saveTimestamp()
         MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
 }
@@ -70,8 +71,8 @@ fun MainMachine.searchRepos(query: String) = flow {
         )
 }
 
-fun MainMachine.newRandomNumber() = flow {
-    emit(state.copy(randomNumber = Random.nextInt()))
+fun MainMachine.saveTimestamp() = flow {
+    emit(state.copy(timestamp = Calendar.getInstance().timeInMillis))
 }
 
 fun MainMachine.hideErrorMessage() = flow {

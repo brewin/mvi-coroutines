@@ -42,7 +42,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         if (!::machine.isInitialized) {
             machine = MainMachine(
                 binding.events(),
-                savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.default(),
+                savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.DEFAULT,
                 GitHubRepositoryImpl(GitHubDataSource())
             )
         }
@@ -73,8 +73,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             .onEach { hideKeyboard() },
         toolbar.menu.findItem(R.id.action_refresh).clicks()
             .map { MainEvent.RefreshClick },
-        toolbar.menu.findItem(R.id.action_random).clicks()
-            .map { MainEvent.RandomClick },
+        toolbar.menu.findItem(R.id.action_test).clicks()
+            .map { MainEvent.TestClick },
         swipeRefreshLayout.refreshes()
             .map { MainEvent.RefreshSwipe }
     ).flattenMerge()

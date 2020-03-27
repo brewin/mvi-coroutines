@@ -14,8 +14,8 @@
         android:title="@string/action_refresh"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/action_random"
-        android:icon="@drawable/ic_question"
-        android:title="@string/action_random"
+        android:id="@+id/action_test"
+        android:icon="@drawable/ic_clock"
+        android:title="@string/action_test"
         app:showAsAction="ifRoom" />
 </menu>
