@@ -10,10 +10,10 @@ abstract class Machine<EVENT, STATE>(events: Flow<EVENT>, initialState: STATE) {
 
     val states = events
         .flowOn(Dispatchers.Main)
-        .flatMapMerge { it.toState() }
+        .flatMapMerge { it.toStates() }
         .onEach { _state = it }
         .onStart { emit(initialState) }
         .flowOn(Dispatchers.IO)
 
-    protected abstract fun EVENT.toState(): Flow<STATE>
+    protected abstract fun EVENT.toStates(): Flow<STATE>
 }

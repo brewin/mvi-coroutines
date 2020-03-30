@@ -1,15 +1,15 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import android.os.Parcelable
+import com.github.brewin.mvicoroutines.domain.Left
+import com.github.brewin.mvicoroutines.domain.Right
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
-import com.github.brewin.mvicoroutines.domain.foldSuspend
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.util.*
-import kotlin.time.ExperimentalTime
 
 sealed class MainEvent {
     data class QuerySubmit(val query: String) : MainEvent()
@@ -31,13 +31,13 @@ data class MainState(
 
     companion object {
         val DEFAULT = MainState(
-                query = "",
-                searchResults = emptyList(),
-                isInProgress = false,
-                errorMessage = "",
-                shouldShowError = false,
-                timestamp = Calendar.getInstance().timeInMillis
-            )
+            query = "",
+            searchResults = emptyList(),
+            isInProgress = false,
+            errorMessage = "",
+            shouldShowError = false,
+            timestamp = Calendar.getInstance().timeInMillis
+        )
     }
 }
 
@@ -47,7 +47,7 @@ class MainMachine(
     internal val gitHubRepository: GitHubRepository
 ) : Machine<MainEvent, MainState>(events, initialState) {
 
-    override fun MainEvent.toState() = when (this) {
+    override fun MainEvent.toStates() = when (this) {
         is MainEvent.QuerySubmit -> searchRepos(query)
         MainEvent.RefreshClick,
         MainEvent.RefreshSwipe -> searchRepos(state.query)
@@ -56,19 +56,14 @@ class MainMachine(
     }
 }
 
-/* State Mutations (ie. use cases) */
+/* State Mutation Flows (ie. use cases) */
 
 fun MainMachine.searchRepos(query: String) = flow {
     emit(state.copy(isInProgress = true))
-    gitHubRepository.searchRepos(query)
-        .foldSuspend(
-            onLeft = { error ->
-                emit(state.copy(query = query, errorMessage = error.message, isInProgress = false))
-            },
-            onRight = { searchResults ->
-                emit(state.copy(query = query, searchResults = searchResults, isInProgress = false))
-            }
-        )
+    when (val it = gitHubRepository.searchRepos(query)) {
+        is Left -> state.copy(query = query, errorMessage = it.value.message, isInProgress = false)
+        is Right -> state.copy(query = query, searchResults = it.value, isInProgress = false)
+    }.also { emit(it) }
 }
 
 fun MainMachine.saveTimestamp() = flow {
