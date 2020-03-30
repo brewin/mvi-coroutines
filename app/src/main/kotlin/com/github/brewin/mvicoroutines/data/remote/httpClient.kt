@@ -19,7 +19,7 @@ val httpClient by lazy {
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
-                    Timber.i(message)
+                    Timber.d(message)
                 }
             }
             level = LogLevel.INFO
