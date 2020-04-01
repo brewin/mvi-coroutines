@@ -15,7 +15,6 @@ sealed class MainEvent {
     data class QuerySubmit(val query: String) : MainEvent()
     object RefreshClick : MainEvent()
     object RefreshSwipe : MainEvent()
-    object TestClick : MainEvent()
     object ErrorMessageDismiss : MainEvent()
 }
 
@@ -36,7 +35,7 @@ data class MainState(
             isInProgress = false,
             errorMessage = "",
             shouldShowError = false,
-            timestamp = Calendar.getInstance().timeInMillis
+            timestamp = 0
         )
     }
 }
@@ -44,32 +43,37 @@ data class MainState(
 class MainMachine(
     events: Flow<MainEvent>,
     initialState: MainState,
-    internal val gitHubRepository: GitHubRepository
+    private val gitHubRepository: GitHubRepository
 ) : Machine<MainEvent, MainState>(events, initialState) {
 
     override fun MainEvent.toStates() = when (this) {
         is MainEvent.QuerySubmit -> searchRepos(query)
-        MainEvent.RefreshClick,
-        MainEvent.RefreshSwipe -> searchRepos(state.query)
-        MainEvent.TestClick -> saveTimestamp()
+        MainEvent.RefreshClick, MainEvent.RefreshSwipe -> searchRepos(state.query)
         MainEvent.ErrorMessageDismiss -> hideErrorMessage()
     }
-}
 
-/* State Mutation Flows (ie. use cases) */
+    /* State Mutation Flows (ie. use cases) */
 
-fun MainMachine.searchRepos(query: String) = flow {
-    emit(state.copy(isInProgress = true))
-    when (val it = gitHubRepository.searchRepos(query)) {
-        is Left -> state.copy(query = query, errorMessage = it.value.message, isInProgress = false)
-        is Right -> state.copy(query = query, searchResults = it.value, isInProgress = false)
-    }.also { emit(it) }
-}
+    private fun searchRepos(query: String) = flow {
+        emit(state.copy(isInProgress = true, timestamp = Calendar.getInstance().timeInMillis))
+        emit(
+            when (val either = gitHubRepository.searchRepos(query)) {
+                is Left -> state.copy(
+                    query = query,
+                    errorMessage = either.value.message,
+                    isInProgress = false,
+                    shouldShowError = true
+                )
+                is Right -> state.copy(
+                    query = query,
+                    searchResults = either.value,
+                    isInProgress = false
+                )
+            }
+        )
+    }
 
-fun MainMachine.saveTimestamp() = flow {
-    emit(state.copy(timestamp = Calendar.getInstance().timeInMillis))
-}
-
-fun MainMachine.hideErrorMessage() = flow {
-    emit(state.copy(shouldShowError = false))
+    private fun hideErrorMessage() = flow {
+        emit(state.copy(shouldShowError = false))
+    }
 }

@@ -73,8 +73,6 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             .onEach { hideKeyboard() },
         toolbar.menu.findItem(R.id.action_refresh).clicks()
             .map { MainEvent.RefreshClick },
-        toolbar.menu.findItem(R.id.action_test).clicks()
-            .map { MainEvent.TestClick },
         swipeRefreshLayout.refreshes()
             .map { MainEvent.RefreshSwipe }
     ).flattenMerge()
