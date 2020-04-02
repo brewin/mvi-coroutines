@@ -7,10 +7,12 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.github.brewin.mvicoroutines.databinding.RepoItemBinding
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.asFlow
 
-class RepoListAdapter(
-    private val onClick: (item: RepoEntity) -> Unit = {}
-) : ListAdapter<RepoEntity, RepoListAdapter.ViewHolder>(ItemCallback) {
+class RepoListAdapter : ListAdapter<RepoEntity, RepoListAdapter.ViewHolder>(ItemCallback) {
+
+    private val itemClicks = ConflatedBroadcastChannel<ItemClickEvent>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(RepoItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -19,12 +21,16 @@ class RepoListAdapter(
         holder.bind(getItem(position))
     }
 
+    fun itemClicks() = itemClicks.asFlow()
+
+    data class ItemClickEvent(val item: RepoEntity)
+
     inner class ViewHolder(
         private val binding: RepoItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: RepoEntity) {
-            binding.root.setOnClickListener { onClick(item) }
+            binding.root.setOnClickListener { itemClicks.offer(ItemClickEvent(item)) }
             binding.root.text = item.name
         }
     }

@@ -3,17 +3,36 @@ package com.github.brewin.mvicoroutines.presentation.arch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
-abstract class Machine<EVENT, STATE>(events: Flow<EVENT>, initialState: STATE) {
+
+abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>(
+    events: Flow<I>,
+    initialState: S
+) {
+
+    interface Input
+
+    interface Output
+    interface State : Output
+    interface Effect : Output
 
     private var _state = initialState
     val state get() = _state
 
-    val states = events
+    val states: Flow<S> = events
         .flowOn(Dispatchers.Main)
-        .flatMapMerge { it.toStates() }
+        .flatMapMerge { it.process() }
+        .filterIsInstance<State>()
+        .map { (it as? S) ?: throw IllegalStateException() }
         .onEach { _state = it }
         .onStart { emit(initialState) }
         .flowOn(Dispatchers.IO)
 
-    protected abstract fun EVENT.toStates(): Flow<STATE>
+    val effects: Flow<E> = events
+        .flowOn(Dispatchers.Main)
+        .flatMapMerge { it.process() }
+        .filterIsInstance<Effect>()
+        .map { (it as? E) ?: throw IllegalStateException() }
+        .flowOn(Dispatchers.IO)
+
+    protected abstract fun I.process(): Flow<Output>
 }

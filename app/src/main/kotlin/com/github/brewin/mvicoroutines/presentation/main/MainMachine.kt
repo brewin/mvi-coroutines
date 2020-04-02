@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.util.*
 
-sealed class MainEvent {
-    data class QuerySubmit(val query: String) : MainEvent()
-    object RefreshClick : MainEvent()
-    object RefreshSwipe : MainEvent()
-    object ErrorMessageDismiss : MainEvent()
+sealed class MainInput : Machine.Input {
+    data class QuerySubmit(val query: String) : MainInput()
+    object RefreshClick : MainInput()
+    object RefreshSwipe : MainInput()
+    data class RepoClick(val url: String) : MainInput()
+    object ErrorMessageDismiss : MainInput()
 }
 
 @Parcelize
@@ -23,16 +24,20 @@ data class MainState(
     val query: String,
     val searchResults: List<RepoEntity>,
     val isInProgress: Boolean,
+    val urlToShow: String,
+    val shouldOpenUrl: Boolean,
     val errorMessage: String,
     val shouldShowError: Boolean,
     val timestamp: Long
-) : Parcelable {
+) : Machine.State, Parcelable {
 
     companion object {
         val DEFAULT = MainState(
             query = "",
             searchResults = emptyList(),
             isInProgress = false,
+            urlToShow = "",
+            shouldOpenUrl = false,
             errorMessage = "",
             shouldShowError = false,
             timestamp = 0
@@ -40,16 +45,21 @@ data class MainState(
     }
 }
 
+sealed class MainEffect : Machine.Effect {
+    data class RepoUrlOpen(val url: String) : MainEffect()
+}
+
 class MainMachine(
-    events: Flow<MainEvent>,
+    events: Flow<MainInput>,
     initialState: MainState,
     private val gitHubRepository: GitHubRepository
-) : Machine<MainEvent, MainState>(events, initialState) {
+) : Machine<MainInput, MainState, MainEffect>(events, initialState) {
 
-    override fun MainEvent.toStates() = when (this) {
-        is MainEvent.QuerySubmit -> searchRepos(query)
-        MainEvent.RefreshClick, MainEvent.RefreshSwipe -> searchRepos(state.query)
-        MainEvent.ErrorMessageDismiss -> hideErrorMessage()
+    override fun MainInput.process() = when (this) {
+        is MainInput.QuerySubmit -> searchRepos(query)
+        MainInput.RefreshClick, MainInput.RefreshSwipe -> searchRepos(state.query)
+        is MainInput.RepoClick -> showRepoUrl(url)
+        MainInput.ErrorMessageDismiss -> hideErrorMessage()
     }
 
     /* State Mutation Flows (ie. use cases) */
@@ -71,6 +81,10 @@ class MainMachine(
                 )
             }
         )
+    }
+
+    private fun showRepoUrl(url: String) = flow {
+        emit(MainEffect.RepoUrlOpen(url))
     }
 
     private fun hideErrorMessage() = flow {

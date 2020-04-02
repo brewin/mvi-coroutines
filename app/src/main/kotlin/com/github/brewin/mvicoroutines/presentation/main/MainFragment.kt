@@ -1,8 +1,9 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.widget.SearchView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.brewin.mvicoroutines.R
@@ -23,13 +24,8 @@ import timber.log.Timber
 class MainFragment : Fragment(R.layout.main_fragment) {
 
     private val binding by viewBinding(MainFragmentBinding::bind)
-
     private lateinit var machine: MainMachine
-
-    private val repoListAdapter = RepoListAdapter {
-        Toast.makeText(requireContext(), it.url, Toast.LENGTH_LONG).show()
-    }
-
+    private val repoListAdapter = RepoListAdapter()
     private val errorSnackbar by lazy {
         Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
     }
@@ -41,17 +37,20 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
         if (!::machine.isInitialized) {
             machine = MainMachine(
-                binding.events(),
+                binding.inputs(),
                 savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.DEFAULT,
                 GitHubRepositoryImpl(GitHubDataSource())
             )
         }
 
-        machine.states
-            .onEach {
-                Timber.d("state = $it")
-                it.render()
-            }.launchIn(lifecycleScope)
+        flowOf(
+            machine.states
+                .onEach { it.render();Timber.d("state = $it") },
+            machine.effects
+                .onEach { it.react() }
+        )
+            .flattenMerge()
+            .launchIn(lifecycleScope)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -64,17 +63,22 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         repoListView.adapter = repoListAdapter
     }
 
-    private fun MainFragmentBinding.events() = flowOf(
+    private fun MainFragmentBinding.inputs() = flowOf(
         errorSnackbar.dismissEvents()
-            .map { MainEvent.ErrorMessageDismiss },
+            .map { MainInput.ErrorMessageDismiss },
         (toolbar.menu.findItem(R.id.action_search).actionView as SearchView).queryTextEvents()
             .filterIsInstance<QueryTextEvent.QuerySubmitted>()
-            .map { MainEvent.QuerySubmit(it.queryText.toString()) }
+            .map { MainInput.QuerySubmit(it.queryText.toString()) }
             .onEach { hideKeyboard() },
         toolbar.menu.findItem(R.id.action_refresh).clicks()
-            .map { MainEvent.RefreshClick },
+            .debounce(1000)
+            .map { MainInput.RefreshClick },
         swipeRefreshLayout.refreshes()
-            .map { MainEvent.RefreshSwipe }
+            .debounce(1000)
+            .map { MainInput.RefreshSwipe },
+        repoListAdapter.itemClicks()
+            .debounce(1000)
+            .map { MainInput.RepoClick(it.item.url) }
     ).flattenMerge()
 
     private fun MainState.render() {
@@ -85,6 +89,16 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         binding.swipeRefreshLayout.isRefreshing = isInProgress
 
         repoListAdapter.submitList(searchResults)
+
+        if (shouldOpenUrl) {
+            startActivity(Intent(Intent.ACTION_VIEW, urlToShow.toUri()))
+        }
+    }
+
+    private fun MainEffect.react() = when (this) {
+        is MainEffect.RepoUrlOpen -> {
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+        }
     }
 
     companion object {
