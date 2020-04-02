@@ -71,13 +71,13 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             .map { MainInput.QuerySubmit(it.queryText.toString()) }
             .onEach { hideKeyboard() },
         toolbar.menu.findItem(R.id.action_refresh).clicks()
-            .debounce(1000)
+            .debounce(500)
             .map { MainInput.RefreshClick },
         swipeRefreshLayout.refreshes()
-            .debounce(1000)
+            .debounce(500)
             .map { MainInput.RefreshSwipe },
         repoListAdapter.itemClicks()
-            .debounce(1000)
+            .debounce(500)
             .map { MainInput.RepoClick(it.item.url) }
     ).flattenMerge()
 

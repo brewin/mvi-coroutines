@@ -62,7 +62,7 @@ class MainMachine(
         MainInput.ErrorMessageDismiss -> hideErrorMessage()
     }
 
-    /* State Mutation Flows (ie. use cases) */
+    /* Output Flows (ie. use cases) */
 
     private fun searchRepos(query: String) = flow {
         emit(state.copy(isInProgress = true, timestamp = Calendar.getInstance().timeInMillis))
