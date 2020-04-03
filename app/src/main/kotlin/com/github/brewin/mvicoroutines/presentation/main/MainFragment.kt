@@ -2,6 +2,7 @@ package com.github.brewin.mvicoroutines.presentation.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.widget.SearchView
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
@@ -10,18 +11,15 @@ import com.github.brewin.mvicoroutines.R
 import com.github.brewin.mvicoroutines.data.remote.GitHubDataSource
 import com.github.brewin.mvicoroutines.data.repository.GitHubRepositoryImpl
 import com.github.brewin.mvicoroutines.databinding.MainFragmentBinding
+import com.github.brewin.mvicoroutines.presentation.arch.provideMachine
 import com.github.brewin.mvicoroutines.presentation.common.hideKeyboard
 import com.github.brewin.mvicoroutines.presentation.common.viewBinding
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.appcompat.QueryTextEvent
 import reactivecircus.flowbinding.appcompat.queryTextEvents
 import reactivecircus.flowbinding.swiperefreshlayout.refreshes
-import timber.log.Timber
 
 class MainFragment : Fragment(R.layout.main_fragment) {
 
@@ -34,24 +32,22 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
         binding.setup()
 
-        if (!::machine.isInitialized) {
-            machine = MainMachine(
-                binding.inputs(),
+        machine = provideMachine {
+            MainMachine(
                 savedInstanceState?.getParcelable(SAVED_STATE_KEY) ?: MainState.DEFAULT,
                 GitHubRepositoryImpl(GitHubDataSource())
             )
         }
 
-        machine.outputs
-            .onEach {
-                Timber.d(it.toString())
-                when (it) {
-                    is MainState -> it.render()
-                    is MainEffect -> it.react()
-                }
-            }
-            .flowOn(Dispatchers.Main)
+        machine.states
+            .onEach { it.render() }
             .launchIn(lifecycleScope)
+
+        machine.effects
+            .onEach { it.react() }
+            .launchIn(lifecycleScope)
+
+        machine.start(binding.inputs())
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -61,6 +57,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     private fun MainFragmentBinding.setup() {
         toolbar.inflateMenu(R.menu.menu_main)
+        (toolbar.menu.findItem(R.id.action_search).actionView as SearchView).apply {
+            imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+        }
         repoListView.adapter = repoListAdapter
     }
 

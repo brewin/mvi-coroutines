@@ -7,7 +7,6 @@ import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.util.*
 
@@ -42,10 +41,9 @@ sealed class MainEffect : Machine.Effect {
 }
 
 class MainMachine(
-    inputs: Flow<MainInput>,
     initialState: MainState,
     private val gitHubRepository: GitHubRepository
-) : Machine<MainInput, MainState, MainEffect>(inputs, initialState) {
+) : Machine<MainInput, MainState, MainEffect>(initialState) {
 
     override fun MainInput.process() = when (this) {
         is MainInput.QuerySubmit -> searchRepos(query)
