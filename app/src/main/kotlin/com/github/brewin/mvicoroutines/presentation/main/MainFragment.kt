@@ -13,11 +13,13 @@ import com.github.brewin.mvicoroutines.databinding.MainFragmentBinding
 import com.github.brewin.mvicoroutines.presentation.common.hideKeyboard
 import com.github.brewin.mvicoroutines.presentation.common.viewBinding
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.appcompat.QueryTextEvent
 import reactivecircus.flowbinding.appcompat.queryTextEvents
-import reactivecircus.flowbinding.material.dismissEvents
 import reactivecircus.flowbinding.swiperefreshlayout.refreshes
 import timber.log.Timber
 
@@ -26,9 +28,6 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     private val binding by viewBinding(MainFragmentBinding::bind)
     private lateinit var machine: MainMachine
     private val repoListAdapter = RepoListAdapter()
-    private val errorSnackbar by lazy {
-        Snackbar.make(requireView(), "", Snackbar.LENGTH_LONG)
-    }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
@@ -43,13 +42,15 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             )
         }
 
-        flowOf(
-            machine.states
-                .onEach { it.render();Timber.d("state = $it") },
-            machine.effects
-                .onEach { it.react() }
-        )
-            .flattenMerge()
+        machine.outputs
+            .onEach {
+                Timber.d(it.toString())
+                when (it) {
+                    is MainState -> it.render()
+                    is MainEffect -> it.react()
+                }
+            }
+            .flowOn(Dispatchers.Main)
             .launchIn(lifecycleScope)
     }
 
@@ -64,9 +65,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     }
 
     private fun MainFragmentBinding.inputs() = flowOf(
-        errorSnackbar.dismissEvents()
-            .map { MainInput.ErrorMessageDismiss },
         (toolbar.menu.findItem(R.id.action_search).actionView as SearchView).queryTextEvents()
+            .debounce(500)
             .filterIsInstance<QueryTextEvent.QuerySubmitted>()
             .map { MainInput.QuerySubmit(it.queryText.toString()) }
             .onEach { hideKeyboard() },
@@ -82,23 +82,17 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     ).flattenMerge()
 
     private fun MainState.render() {
-        if (shouldShowError && !errorSnackbar.isShownOrQueued) {
-            errorSnackbar.setText(errorMessage).show()
-        }
-
         binding.swipeRefreshLayout.isRefreshing = isInProgress
-
-        repoListAdapter.submitList(searchResults)
-
-        if (shouldOpenUrl) {
-            startActivity(Intent(Intent.ACTION_VIEW, urlToShow.toUri()))
+        repoListAdapter.submitList(searchResults) {
+            binding.repoListView.scrollToPosition(0)
         }
     }
 
     private fun MainEffect.react() = when (this) {
-        is MainEffect.RepoUrlOpen -> {
+        is MainEffect.ShowError ->
+            Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show()
+        is MainEffect.OpenRepoUrl ->
             startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-        }
     }
 
     companion object {

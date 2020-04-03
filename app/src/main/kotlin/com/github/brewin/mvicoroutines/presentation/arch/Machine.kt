@@ -2,10 +2,11 @@ package com.github.brewin.mvicoroutines.presentation.arch
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import timber.log.Timber
 
 
 abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>(
-    events: Flow<I>,
+    inputs: Flow<I>,
     initialState: S
 ) {
 
@@ -18,21 +19,12 @@ abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>
     private var _state = initialState
     val state get() = _state
 
-    val states: Flow<S> = events
+    val outputs: Flow<Output> = inputs
         .flowOn(Dispatchers.Main)
-        .flatMapMerge { it.process() }
-        .filterIsInstance<State>()
-        .map { (it as? S) ?: throw IllegalStateException("Invalid State") }
-        .onEach { _state = it }
+        .flatMapConcat { it.process() }
         .onStart { emit(initialState) }
-        .flowOn(Dispatchers.IO)
-
-    val effects: Flow<E> = events
-        .flowOn(Dispatchers.Main)
-        .flatMapMerge { it.process() }
-        .filterIsInstance<Effect>()
-        .map { (it as? E) ?: throw IllegalStateException("Invalid Effect") }
-        .flowOn(Dispatchers.IO)
+        .onEach { if (it is State) _state = it as S }
+        .flowOn(Dispatchers.Default)
 
     protected abstract fun I.process(): Flow<Output>
 }
