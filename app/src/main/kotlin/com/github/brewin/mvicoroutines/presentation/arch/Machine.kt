@@ -17,8 +17,8 @@ abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>
 ) : ViewModel() {
 
     interface Input
-
     interface Output
+
     interface State : Output
     interface Effect : Output
 
@@ -30,17 +30,18 @@ abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>
     val effects = _effects.asFlow()
 
     @Suppress("UNCHECKED_CAST")
-    fun start(inputs: Flow<I>): Job = inputs
-        .flowOn(Dispatchers.Main)
-        .flatMapConcat { it.process() }
-        .onEach {
-            when (it) {
-                is State -> _states.send(it as S)
-                is Effect -> _effects.send(it as E)
+    fun start(inputs: Flow<I>): Job =
+        inputs
+            .flowOn(Dispatchers.Main)
+            .flatMapConcat { it.process() }
+            .onEach {
+                when (it) {
+                    is State -> _states.send(it as S)
+                    is Effect -> _effects.send(it as E)
+                }
             }
-        }
-        .flowOn(Dispatchers.Default)
-        .launchIn(viewModelScope)
+            .flowOn(Dispatchers.Default)
+            .launchIn(viewModelScope)
 
     protected abstract fun I.process(): Flow<Output>
 }
