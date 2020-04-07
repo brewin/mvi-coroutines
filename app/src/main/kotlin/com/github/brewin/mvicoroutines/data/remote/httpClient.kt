@@ -13,6 +13,12 @@ import timber.log.Timber
 
 val httpClient by lazy {
     HttpClient(OkHttp) {
+        engine {
+            config {
+                // https://github.com/ktorio/ktor/issues/1708
+                retryOnConnectionFailure(true)
+            }
+        }
         install(JsonFeature) {
             serializer = KotlinxSerializer(Json(JsonConfiguration.Default))
         }
