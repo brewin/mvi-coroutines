@@ -5,45 +5,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 
 // TODO: Don't use ViewModel. Make it multiplatform ready.
-abstract class Machine<I : Machine.Input, S : Machine.State, E : Machine.Effect>(
-    initialState: S
+abstract class Machine<INPUT : Any, OUTPUT : Any, STATE : OUTPUT, EFFECT : OUTPUT>(
+    initialState: STATE
 ) : ViewModel() {
 
-    interface Input
-    interface Output
+    var state: STATE = initialState
+        private set
 
-    interface State : Output
-    interface Effect : Output
-
-    private val _states = ConflatedBroadcastChannel(initialState)
-    val states = _states.asFlow()
-    val state get() = _states.value
-
-    private val _effects = BroadcastChannel<E>(Channel.BUFFERED)
-    val effects = _effects.asFlow()
+    private var outputs: Flow<OUTPUT> = emptyFlow()
 
     @Suppress("UNCHECKED_CAST")
-    fun start(inputs: Flow<I>): Job =
+    fun outputs(inputs: Flow<INPUT>): Flow<OUTPUT> = flowOf(
+        outputs,
         inputs
             .flowOn(Dispatchers.Main)
             .flatMapConcat { it.process() }
-            .onEach {
-                when (it) {
-                    is State -> _states.send(it as S)
-                    is Effect -> _effects.send(it as E)
-                }
-            }
+            .onStart { emit(state) }
+            .onEach { if (state::class.isInstance(it)) state = it as STATE }
             .flowOn(Dispatchers.Default)
-            .launchIn(viewModelScope)
+            .broadcastIn(viewModelScope)
+            .asFlow()
+    ).flattenMerge().also { outputs = it }
 
-    protected abstract fun I.process(): Flow<Output>
+    protected abstract fun INPUT.process(): Flow<OUTPUT>
 }
 
 @Suppress("UNCHECKED_CAST")

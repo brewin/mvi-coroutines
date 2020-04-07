@@ -10,12 +10,13 @@ import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.flow
 import java.util.*
 
-sealed class MainInput : Machine.Input {
-    data class QuerySubmit(val query: String) : MainInput()
-    object RefreshClick : MainInput()
-    object RefreshSwipe : MainInput()
-    data class RepoClick(val url: String) : MainInput()
-}
+sealed class MainInput
+data class QuerySubmit(val query: String) : MainInput()
+object RefreshClick : MainInput()
+object RefreshSwipe : MainInput()
+data class RepoClick(val url: String) : MainInput()
+
+sealed class MainOutput
 
 @Parcelize
 data class MainState(
@@ -23,7 +24,7 @@ data class MainState(
     val searchResults: List<RepoEntity>,
     val isInProgress: Boolean,
     val timestamp: Long
-) : Machine.State, Parcelable {
+) : MainOutput(), Parcelable {
 
     companion object {
         val DEFAULT = MainState(
@@ -35,7 +36,7 @@ data class MainState(
     }
 }
 
-sealed class MainEffect : Machine.Effect {
+sealed class MainEffect : MainOutput() {
     data class OpenRepoUrl(val url: String) : MainEffect()
     data class ShowError(val message: String) : MainEffect()
 }
@@ -43,12 +44,12 @@ sealed class MainEffect : Machine.Effect {
 class MainMachine(
     initialState: MainState,
     private val gitHubRepository: GitHubRepository
-) : Machine<MainInput, MainState, MainEffect>(initialState) {
+) : Machine<MainInput, MainOutput, MainState, MainEffect>(initialState) {
 
     override fun MainInput.process() = when (this) {
-        is MainInput.QuerySubmit -> searchRepos(query)
-        MainInput.RefreshClick, MainInput.RefreshSwipe -> searchRepos(state.query)
-        is MainInput.RepoClick -> showRepoUrl(url)
+        is QuerySubmit -> searchRepos(query)
+        RefreshClick, RefreshSwipe -> searchRepos(state.query)
+        is RepoClick -> showRepoUrl(url)
     }
 
     /* Output Flows (ie. use cases) */

@@ -8,19 +8,22 @@ import com.github.brewin.mvicoroutines.domain.asRight
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.error.ConnectionError
 import com.github.brewin.mvicoroutines.domain.error.DomainError
+import com.github.brewin.mvicoroutines.domain.error.FakeError
 import com.github.brewin.mvicoroutines.domain.error.GithubSearchError
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import io.ktor.client.features.ResponseException
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.io.IOException
+import kotlin.random.Random
 
 class GitHubRepositoryImpl(private val gitHubDataSource: GitHubDataSource) : GitHubRepository {
 
     override suspend fun searchRepos(query: String): Either<DomainError, List<RepoEntity>> =
         try {
             delay(3000L) // FIXME: Faking a long delay for testing.
-            gitHubDataSource.searchRepos(query).asRepoEntityList.asRight
+            if (Random.nextBoolean()) FakeError().asLeft
+            else gitHubDataSource.searchRepos(query).asRepoEntityList.asRight
         } catch (e: Exception) {
             Timber.e(e)
             when (e) {

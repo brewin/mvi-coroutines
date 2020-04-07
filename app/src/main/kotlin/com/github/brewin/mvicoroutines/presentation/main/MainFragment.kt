@@ -20,6 +20,7 @@ import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.appcompat.QueryTextEvent
 import reactivecircus.flowbinding.appcompat.queryTextEvents
 import reactivecircus.flowbinding.swiperefreshlayout.refreshes
+import timber.log.Timber
 
 class MainFragment : Fragment(R.layout.main_fragment) {
 
@@ -39,15 +40,14 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             )
         }
 
-        machine.states
-            .onEach { it.render() }
-            .launchIn(lifecycleScope)
-
-        machine.effects
-            .onEach { it.react() }
-            .launchIn(lifecycleScope)
-
-        machine.start(binding.inputs())
+        machine.outputs(binding.inputs())
+            .onEach {
+                Timber.d("output = $it")
+                when (it) {
+                    is MainState -> it.render()
+                    is MainEffect -> it.react()
+                }
+            }.launchIn(lifecycleScope)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -67,17 +67,17 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         (toolbar.menu.findItem(R.id.action_search).actionView as SearchView).queryTextEvents()
             .debounce(500)
             .filterIsInstance<QueryTextEvent.QuerySubmitted>()
-            .map { MainInput.QuerySubmit(it.queryText.toString()) }
+            .map { QuerySubmit(it.queryText.toString()) }
             .onEach { hideKeyboard() },
         toolbar.menu.findItem(R.id.action_refresh).clicks()
             .debounce(500)
-            .map { MainInput.RefreshClick },
+            .map { RefreshClick },
         swipeRefreshLayout.refreshes()
             .debounce(500)
-            .map { MainInput.RefreshSwipe },
+            .map { RefreshSwipe },
         repoListAdapter.itemClicks()
             .debounce(500)
-            .map { MainInput.RepoClick(it.item.url) }
+            .map { RepoClick(it.item.url) }
     ).flattenMerge()
 
     private fun MainState.render() {
