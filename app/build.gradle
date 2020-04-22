@@ -68,6 +68,7 @@ dependencies {
 
     // Data
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion"
+    implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
     implementation "io.ktor:ktor-client-okhttp:$ktorVersion"
     implementation "io.ktor:ktor-client-json-jvm:$ktorVersion"
     implementation "io.ktor:ktor-client-serialization-jvm:$ktorVersion"

@@ -19,7 +19,7 @@ buildscript {
         lifecycleKtxVersion = '2.3.0-alpha01'
         lifecycleVersion = '2.3.0-alpha01'
         materialVersion = '1.2.0-alpha06'
-        okHttpVersion = '3.14.0'
+        okHttpVersion = '4.5.0'
         serializationVersion = '0.20.0'
         swipeRefreshLayoutVersion = '1.1.0-rc01'
         timberVersion = '4.7.1'
@@ -43,6 +43,10 @@ allprojects {
         jcenter()
         mavenCentral()
     }
+}
+
+configurations.all {
+    resolutionStrategy.force "com.squareup.okhttp3:okhttp:$okHttpVersion"
 }
 
 task clean(type: Delete) {
