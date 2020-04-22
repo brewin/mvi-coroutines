@@ -24,7 +24,7 @@ import reactivecircus.flowbinding.appcompat.queryTextEvents
 import reactivecircus.flowbinding.swiperefreshlayout.refreshes
 import timber.log.Timber
 
-class MainFragment : Fragment(R.layout.main_fragment) {
+class MainFragment : Fragment() {
 
     private var machine: MainMachine? = null
     private val repoListAdapter = RepoListAdapter()
