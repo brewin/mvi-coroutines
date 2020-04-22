@@ -18,17 +18,21 @@ abstract class Machine<INPUT : Any, OUTPUT : Any, STATE : OUTPUT, EFFECT : OUTPU
     private var outputs: Flow<OUTPUT> = emptyFlow()
 
     @Suppress("UNCHECKED_CAST")
-    fun outputs(inputs: Flow<INPUT>): Flow<OUTPUT> = flowOf(
-        outputs,
-        inputs
-            .flowOn(Dispatchers.Main)
-            .flatMapConcat { it.process() }
-            .onStart { emit(state) }
-            .onEach { if (state::class.isInstance(it)) state = it as STATE }
-            .flowOn(Dispatchers.Default)
-            .broadcastIn(viewModelScope)
-            .asFlow()
-    ).flattenMerge().also { outputs = it }
+    fun outputs(inputs: Flow<INPUT>): Flow<OUTPUT> {
+        outputs = flowOf(
+            outputs,
+            inputs
+                .flowOn(Dispatchers.Main)
+                .flatMapConcat { it.process() }
+                .onStart { emit(state) }
+                .onEach { if (state::class.isInstance(it)) state = it as STATE }
+                .flowOn(Dispatchers.Default)
+                .broadcastIn(viewModelScope)
+                .asFlow()
+        ).flattenMerge()
+
+        return outputs
+    }
 
     protected abstract fun INPUT.process(): Flow<OUTPUT>
 }
