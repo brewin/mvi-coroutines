@@ -66,15 +66,6 @@ dependencies {
     implementation "io.github.reactivecircus.flowbinding:flowbinding-recyclerview:$flowbindingVersion"
     implementation "io.github.reactivecircus.flowbinding:flowbinding-material:$flowbindingVersion"
 
-    // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleExtensionsVersion"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleKtxVersion"
-    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleKtxVersion"
-
     // Data
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion"
     implementation "io.ktor:ktor-client-okhttp:$ktorVersion"
