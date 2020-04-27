@@ -21,7 +21,7 @@ abstract class Machine<INPUT : Any, OUTPUT : Any, STATE : OUTPUT, EFFECT : OUTPU
 
     @Suppress("UNCHECKED_CAST")
     fun outputs(inputs: Flow<INPUT>): Flow<OUTPUT> {
-        outputs = flowOf(
+        outputs = merge(
             outputs,
             inputs
                 .flowOn(Dispatchers.Main)
@@ -32,7 +32,7 @@ abstract class Machine<INPUT : Any, OUTPUT : Any, STATE : OUTPUT, EFFECT : OUTPU
                 .flowOn(Dispatchers.Default)
                 .broadcastIn(viewModelScope)
                 .asFlow()
-        ).flattenMerge()
+        )
 
         return outputs
     }
