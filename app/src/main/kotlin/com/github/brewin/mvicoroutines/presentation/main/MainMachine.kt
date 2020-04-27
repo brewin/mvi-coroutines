@@ -7,7 +7,7 @@ import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.Flow
 import java.util.*
 
 sealed class MainInput
@@ -46,32 +46,30 @@ class MainMachine(
     private val gitHubRepository: GitHubRepository
 ) : Machine<MainInput, MainOutput, MainState, MainEffect>(initialState) {
 
-    override fun MainInput.process() = when (this) {
+    override fun MainInput.process(): Flow<() -> MainOutput> = when (this) {
         is QuerySubmit -> searchRepos(query)
         RefreshClick, RefreshSwipe -> searchRepos(state.query)
         is RepoClick -> showRepoUrl(url)
     }
-
-    /* Output Flows (ie. use cases) */
-
-    private fun searchRepos(query: String) = flow {
-        emit(
+  
+    private fun searchRepos(query: String) = update {
+        emit {
             state.copy(
                 query = query,
                 isInProgress = true,
                 timestamp = Calendar.getInstance().timeInMillis
             )
-        )
-        emit(
-            when (val either = gitHubRepository.searchRepos(query)) {
-                is Left -> MainEffect.ShowError(either.value.message)
-                is Right -> state.copy(searchResults = either.value)
-            }
-        )
-        emit(state.copy(isInProgress = false))
+        }
+
+        when (val either = gitHubRepository.searchRepos(query)) {
+            is Left -> emit { MainEffect.ShowError(either.value.message) }
+            is Right -> emit { state.copy(searchResults = either.value) }
+        }
+
+        emit { state.copy(isInProgress = false) }
     }
 
-    private fun showRepoUrl(url: String) = flow {
-        emit(MainEffect.OpenRepoUrl(url))
+    private fun showRepoUrl(url: String) = update {
+        emit { MainEffect.OpenRepoUrl(url) }
     }
 }
