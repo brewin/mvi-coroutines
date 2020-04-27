@@ -27,8 +27,8 @@ abstract class Machine<INPUT : Any, OUTPUT : Any, STATE : OUTPUT, EFFECT : OUTPU
                 .flowOn(Dispatchers.Main)
                 .flatMapMerge { input -> input.process() }
                 .map { transform -> transform() }
-                .onStart { emit(mutableState) }
                 .onEach { if (mutableState::class.isInstance(it)) mutableState = it as STATE }
+                .onStart { emit(mutableState) }
                 .flowOn(Dispatchers.Default)
                 .broadcastIn(viewModelScope)
                 .asFlow()

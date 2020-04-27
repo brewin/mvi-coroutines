@@ -103,6 +103,6 @@ class MainFragment : Fragment() {
     }
 
     companion object {
-        const val SAVED_STATE_KEY = "main_fragment_saved_state"
+        const val SAVED_STATE_KEY = "MAIN_FRAGMENT_SAVED_STATE"
     }
 }

@@ -1,8 +1,7 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import android.os.Parcelable
-import com.github.brewin.mvicoroutines.domain.Left
-import com.github.brewin.mvicoroutines.domain.Right
+import com.github.brewin.mvicoroutines.domain.awaitFold
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
@@ -51,7 +50,7 @@ class MainMachine(
         RefreshClick, RefreshSwipe -> searchRepos(state.query)
         is RepoClick -> showRepoUrl(url)
     }
-  
+
     private fun searchRepos(query: String) = update {
         emit {
             state.copy(
@@ -60,12 +59,10 @@ class MainMachine(
                 timestamp = Calendar.getInstance().timeInMillis
             )
         }
-
-        when (val either = gitHubRepository.searchRepos(query)) {
-            is Left -> emit { MainEffect.ShowError(either.value.message) }
-            is Right -> emit { state.copy(searchResults = either.value) }
-        }
-
+        gitHubRepository.searchRepos(query).awaitFold(
+            onLeft = { emit { MainEffect.ShowError(it.message) } },
+            onRight = { emit { state.copy(searchResults = it) } }
+        )
         emit { state.copy(isInProgress = false) }
     }
 
