@@ -7,12 +7,13 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.github.brewin.mvicoroutines.databinding.RepoItemBinding
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.asFlow
 
 class RepoListAdapter : ListAdapter<RepoEntity, RepoListAdapter.ViewHolder>(ItemCallback) {
 
-    private val itemClicks = ConflatedBroadcastChannel<ItemClickEvent>()
+    private val itemClicks = BroadcastChannel<ItemClickEvent>(Channel.BUFFERED)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(RepoItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))

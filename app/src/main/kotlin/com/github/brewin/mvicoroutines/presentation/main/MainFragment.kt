@@ -44,16 +44,16 @@ class MainFragment : Fragment() {
             )
         }
 
-        machine
-            ?.outputs(binding.inputs())
-            ?.onEach {
-                Timber.d("output = $it")
-                when (it) {
-                    is MainState -> binding.render(it)
-                    is MainEffect -> binding.react(it)
+        machine!!.outputs(binding.inputs())
+            .onEach { output ->
+                Timber.d("output = $output")
+                when (output) {
+                    is MainState -> binding.render(output)
+                    is MainEffect -> binding.react(output)
                 }
             }
-            ?.launchIn(lifecycleScope)
+            .launchIn(lifecycleScope)
+
 
         return binding.root
     }
