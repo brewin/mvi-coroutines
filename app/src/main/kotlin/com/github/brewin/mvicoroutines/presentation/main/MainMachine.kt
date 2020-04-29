@@ -1,8 +1,8 @@
 package com.github.brewin.mvicoroutines.presentation.main
 
 import android.os.Parcelable
-import com.github.brewin.mvicoroutines.domain.awaitFold
 import com.github.brewin.mvicoroutines.domain.entity.RepoEntity
+import com.github.brewin.mvicoroutines.domain.fold
 import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
@@ -59,7 +59,7 @@ class MainMachine(
                 timestamp = Calendar.getInstance().timeInMillis
             )
         }
-        gitHubRepository.searchRepos(query).awaitFold(
+        gitHubRepository.searchRepos(query).fold(
             onLeft = { emit { MainEffect.ShowError(it.message) } },
             onRight = { emit { state.copy(searchResults = it) } }
         )
