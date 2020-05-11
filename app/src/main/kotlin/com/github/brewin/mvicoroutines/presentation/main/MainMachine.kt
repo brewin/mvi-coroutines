@@ -7,6 +7,7 @@ import com.github.brewin.mvicoroutines.domain.repository.GitHubRepository
 import com.github.brewin.mvicoroutines.presentation.arch.Machine
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.util.*
 
 sealed class MainInput

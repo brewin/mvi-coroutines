@@ -26,7 +26,7 @@ import timber.log.Timber
 
 class MainFragment : Fragment() {
 
-    private var machine: MainMachine? = null
+    private lateinit var machine: MainMachine
     private val repoListAdapter = RepoListAdapter()
 
     override fun onCreateView(
@@ -44,7 +44,7 @@ class MainFragment : Fragment() {
             )
         }
 
-        machine!!.outputs(binding.inputs())
+        machine.outputs(binding.inputs())
             .onEach { output ->
                 Timber.d("output = $output")
                 when (output) {
@@ -54,13 +54,12 @@ class MainFragment : Fragment() {
             }
             .launchIn(lifecycleScope)
 
-
         return binding.root
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putParcelable(SAVED_STATE_KEY, machine?.state)
+        outState.putParcelable(SAVED_STATE_KEY, machine.state)
     }
 
     private fun MainFragmentBinding.setup() {
@@ -71,7 +70,7 @@ class MainFragment : Fragment() {
         repoListView.adapter = repoListAdapter
     }
 
-    private fun MainFragmentBinding.inputs() = flowOf(
+    private fun MainFragmentBinding.inputs() = merge(
         (toolbar.menu.findItem(R.id.action_search).actionView as SearchView).queryTextEvents()
             .debounce(500)
             .filterIsInstance<QueryTextEvent.QuerySubmitted>()
@@ -86,7 +85,7 @@ class MainFragment : Fragment() {
         repoListAdapter.itemClicks()
             .debounce(500)
             .map { RepoClick(it.item.url) }
-    ).flattenMerge()
+    )
 
     private fun MainFragmentBinding.render(state: MainState) {
         swipeRefreshLayout.isRefreshing = state.isInProgress
